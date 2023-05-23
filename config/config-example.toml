@@ -1,0 +1,26 @@
+[fulfillmentd]
+    service_port = 2023
+    log_handler = "console"
+    log_file = "logs/fulfillmentd.log"
+    # one of "fatal", "error", "warn", "debug", "trace"
+    verbosity = "debug"
+
+[elv]
+    # demo
+    config_url = "https://demov3.net955210.contentfabric.io/config"
+    # prod
+    #config_url = "https://main.net955305.contentfabric.io/config"
+
+[db]
+    host = "roach-single-node"
+    ssl_mode = "verify-full"
+    port = 26257
+    database = "fulfillmentd"
+    username = "fulfillmentd"
+    password = "fulfillmentd"
+    max_conn = 10
+    conn_timeout_ms = 1000
+
+    ssl_root_cert = "../ops/cockroach/ca.crt"
+    ssl_cert = "../ops/cockroach/client.root.crt"
+    ssl_key = "../ops/cockroach/client.root.key"
