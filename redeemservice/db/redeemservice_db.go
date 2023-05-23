@@ -107,50 +107,11 @@ func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 	return
 }
 
-func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequest) (data TransactionData, err error) {
-	// TODO: figure out the data in the transaction
-	data = TransactionData{}
-
-	// mock data for testing from `make load_codes` + `make fulfill_code`
-	switch request.Transaction {
-	case "tx-test-0000":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "1",
-		}
-	case "tx-test-0001":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "2",
-		}
-	case "tx-test-0002":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "3",
-		}
-	case "tx-test-invaliduser":
-		data = TransactionData{
-			UserAddr:     "0xUserAddr",
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "3",
-		}
-	}
-
-	return
-}
-
 func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
 	log.Debug("FulfillRedeemableOffer", "request", request)
 
 	var tx TransactionData
-	if tx, err = fs.ResolveTransactionData(request); err != nil {
+	if tx, err = fs.resolveTransactionData(request); err != nil {
 		return
 	}
 
@@ -308,5 +269,48 @@ func mergeTemplate(path string, ctx map[string]interface{}) (stmt string, err er
 	}
 
 	stmt = whitespace.ReplaceAllString(buf.String(), " ")
+	return
+}
+
+// resolveTransactionData does an external query to the ELV blockchain to resolve the data from in the request transaction.
+// It also provides mock data for testing from `make load_codes` + `make fulfill_code`
+//
+// TODO: configure and query eth endpoint for the data in the transaction
+//
+func (fs *FulfillmentPersistence) resolveTransactionData(request FulfillmentRequest) (data TransactionData, err error) {
+
+	data = TransactionData{}
+
+	switch request.Transaction {
+	case "tx-test-0000":
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "1",
+		}
+	case "tx-test-0001":
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "2",
+		}
+	case "tx-test-0002":
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "3",
+		}
+	case "tx-test-invaliduser":
+		data = TransactionData{
+			UserAddr:     "0xUserAddr",
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "3",
+		}
+	}
+
 	return
 }
