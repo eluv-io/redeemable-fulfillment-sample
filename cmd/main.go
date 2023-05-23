@@ -71,7 +71,7 @@ var (
 		return nil
 	}
 
-	log = elog.Get("/eluvio/fulfillmentd")
+	log = elog.Get("/fs/fulfillmentd")
 )
 
 func getBaseConfig(cfg *config.AuthorityConfig) (err error) {

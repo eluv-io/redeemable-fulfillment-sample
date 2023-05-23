@@ -80,7 +80,7 @@ func (fs *FulfillmentPersistence) context() map[string]interface{} {
 }
 
 func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
-	log.Trace("SetupFulfillment", "data", data)
+	log.Debug("SetupFulfillment", "data", data)
 	if data.ContractAddr == "" || data.RedeemableId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
 		log.Debug("invalid data", "data", data)
 		err = errors.NoTrace("invalid load data", errors.K.Invalid, "data", data)
@@ -140,7 +140,7 @@ func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequ
 }
 
 func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
-	log.Trace("FulfillRedeemableOffer", "request", request)
+	log.Debug("FulfillRedeemableOffer", "request", request)
 
 	var tx TransactionData
 	if tx, err = fs.ResolveTransactionData(request); err != nil {
@@ -156,7 +156,6 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	if err != nil {
 		return
 	}
-	log.Trace("FulfillRedeemableOffer", "existing", resp)
 	if resp.Claimed {
 		err = errors.NoTrace("token already claimed", errors.K.Invalid, "request", request, "tx", tx)
 		return
@@ -173,8 +172,7 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	args = append(args, tx.UserAddr)
 	args = append(args, tx.ContractAddr)
 	args = append(args, tx.RedeemableId)
-
-	log.Trace("FulfillRedeemableOffer", "stmt", stmt, "args", args)
+	//log.Trace("FulfillRedeemableOffer", "stmt", stmt, "args", args)
 
 	var rows *pgx.Rows
 	if rows, err = fs.conn().Query(stmt, args...); err != nil {
@@ -183,7 +181,6 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	defer rows.Close()
 
 	if rows.Next() {
-		log.Trace("FulfillRedeemableOffer", "rows", rows)
 		resp, err = scanFulfillmentData(rows, tx.ContractAddr, tx.RedeemableId, tx.TokenId)
 		if resp.Claimed {
 			resp.UserAddr = tx.UserAddr
