@@ -5,13 +5,13 @@ This repo contains sample code for a service that implements the fulfillment of 
 Redeemable Offers are documented here: https://elv-test-hub.web.app/advanced/tokens/#nft-redeemables
 
 The flow is as follows:
-     - server accepts signed message including the redemption transaction ID
-     - server verifies that the signer is who redeemed
-     - server verifies not yet fulfilled
-     - server calls the fulfillment custom function
-     - if fulfillment succeeds, persists DB state that this offer is fulfilled
+ - server accepts signed message including the redemption transaction ID
+ - server verifies that the signer is who redeemed
+ - server verifies not yet fulfilled
+ - server calls the fulfillment custom function
+ - if fulfillment succeeds, persists DB state that this offer is fulfilled
 
-It also implements a sample fulfillment -- a simple URL + code, mirroring the case of a coupon (the code) for a website purchase (the URL).
+The repo also implements a sample fulfillment -- a simple URL + code, mirroring the case of a coupon (the code) for a website purchase (the URL).
 
 
 ## Getting Started
@@ -43,7 +43,7 @@ make version
   - bearer auth token -> user address
 
 - response on success: url + code
-- response if tx's tokenId has already claimed: 400
+- response on error or invalid request (eg, tx tokenId already claimed): 400
 
 
 ### Request -> Response Processing
@@ -56,18 +56,19 @@ process as follows:
 - query DB, verify this contract + redeemableId + tokenId not been redeemed before
 - query DB, find matching contract + redeemableId + not-claimed that matches 
    - error if we're out of codes
-- mark this tokenId as redeemed in the DB
-- return URL and code  (any code can be used for any tokenId)
+- insert this tokenId as redeemed in the DB
+- return URL and code (any code can be used for any tokenId)
 
 
+## Internals: splitting library function vs Customer service interface
 
-## Internals: Splitting Eluvio vs Customer service interface
-
-Fulfillment Daemon calls into the customer's fulfillment service interface:
+The Fulfillment Daemon calls into the customer's fulfillment service 
+interface ("fulfillment custom function") with
 ```
-FulfillRedeemableOffer(contractAddr, offerId, tokenId, redeemingUserAddress string) string
+FulfillRedeemableOffer(contractAddr, offerId, tokenId, redeemingUserAddress string) interface{}
 ```
-and they return json.  we deliver the metadata + json. (sample returns `{ url, code }`)
+and it accepts arbitrary data in repsonse.  The daemon then deliver the 
+metadata + marshalled interface as json. The sample returns `{ url, code }`.  
 
 This portion has not been completed.
 

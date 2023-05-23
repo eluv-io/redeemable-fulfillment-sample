@@ -18,8 +18,8 @@
 package api
 
 import (
-	"fulfillmentd/server"
 	"fulfillmentd/redeemservice/db"
+	"fulfillmentd/server"
 	"fulfillmentd/utils"
 	elog "github.com/eluv-io/log-go"
 	"github.com/gin-gonic/gin"
@@ -29,10 +29,9 @@ import (
 var log = elog.Get("/fs/api")
 
 type FulfillmentResponse struct {
-	Message     string             `json:"message"`
-	Url         string             `json:"url"`
-	Code        string             `json:"code"`
-	Transaction db.TransactionData `json:"transaction"`
+	Message         string             `json:"message"`
+	FulfillmentData interface{}        `json:"fulfillment_data"`
+	Transaction     db.TransactionData `json:"transaction"`
 }
 
 type LoadRequest struct {
@@ -123,9 +122,14 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 		}
 
 		ret := FulfillmentResponse{
-			Message:     "fulfilled redeemable offer",
-			Url:         data.Url,
-			Code:        data.Code,
+			Message: "fulfilled redeemable offer",
+			FulfillmentData: struct {
+				Url  string `json:"url"`
+				Code string `json:"code"`
+			}{
+				Url:  data.Url,
+				Code: data.Code,
+			},
 			Transaction: data.ToTransactionData(),
 		}
 		ctx.JSON(http.StatusOK, ret)
