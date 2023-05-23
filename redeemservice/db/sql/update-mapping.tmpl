@@ -1,3 +1,5 @@
 UPDATE {{.database}}.fulfillment_service
-SET claimed = true, claimer_token_id = $1, updated = now()
-WHERE contract_addr = $2 AND redeemable_id = $3
+SET claimed = true, claimer_token_id = $1, claimer_user_addr = $2, updated = now()
+WHERE contract_addr = $3 AND redeemable_id = $4
+LIMIT 1
+RETURNING claimed, claimer_user_addr, url, code, created, updated

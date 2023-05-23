@@ -105,7 +105,7 @@ func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequ
 	if request.Transaction == "tx-test-0000" {
 		data = TransactionData{
 			UserAddr:     request.UserAddr,
-			ContractAddr: "0x0ContractAddress",
+			ContractAddr: "0xContractAddress",
 			RedeemableId: "0",
 			TokenId:      "1",
 		}
@@ -131,6 +131,7 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	if err != nil {
 		return
 	}
+	log.Trace("FulfillRedeemableOffer", "existing", resp)
 	if resp.Claimed {
 		err = errors.NoTrace("token already claimed", errors.K.Invalid, "request", request, "tx", tx)
 		return
@@ -144,8 +145,11 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 
 	var args []interface{}
 	args = append(args, tx.TokenId)
+	args = append(args, tx.UserAddr)
 	args = append(args, tx.ContractAddr)
 	args = append(args, tx.RedeemableId)
+
+	log.Trace("FulfillRedeemableOffer", "stmt", stmt, "args", args)
 
 	var rows *pgx.Rows
 	if rows, err = fs.conn().Query(stmt, args...); err != nil {
@@ -154,24 +158,10 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	defer rows.Close()
 
 	if rows.Next() {
-		var url, code, addr sql.NullString
-		var claimed sql.NullBool
-		var created, updated sql.NullTime
-		if err = rows.Scan(&url, &code, &addr, &claimed, &created, &updated); err != nil {
-			return
-		}
-		if claimed.Valid && claimed.Bool {
-			resp = FulfillmentData{
-				ContractAddr: tx.ContractAddr,
-				RedeemableId: tx.RedeemableId,
-				TokenId:      tx.TokenId,
-				Claimed:      true,
-				UserAddr:     tx.UserAddr,
-				Created:      created.Time,
-				Updated:      updated.Time,
-				Url:          url.String,
-				Code:         code.String,
-			}
+		log.Trace("FulfillRedeemableOffer", "rows", rows)
+		resp, err = scanFulfillmentData(rows, tx.ContractAddr, tx.RedeemableId, tx.TokenId)
+		if resp.Claimed {
+			resp.UserAddr = tx.UserAddr
 		}
 	}
 
@@ -197,24 +187,31 @@ func (fs *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, t
 	defer rows.Close()
 
 	if rows.Next() {
-		var id, url, code, addr sql.NullString
-		var claimed sql.NullBool
-		var created, updated sql.NullTime
-		if err = rows.Scan(&id, &url, &code, &addr, &claimed, &created, &updated); err != nil {
-			return
-		}
-		if claimed.Valid && claimed.Bool {
-			resp = FulfillmentData{
-				ContractAddr: contractAddr,
-				RedeemableId: redeemableId,
-				TokenId:      tokenId,
-				Claimed:      true,
-				UserAddr:     addr.String,
-				Created:      created.Time,
-				Updated:      updated.Time,
-				Url:          url.String,
-				Code:         code.String,
-			}
+		resp, err = scanFulfillmentData(rows, contractAddr, redeemableId, tokenId)
+	}
+
+	return
+}
+
+func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId string) (row FulfillmentData, err error) {
+	var claimed sql.NullBool
+	var addr, url, code sql.NullString
+	var created, updated sql.NullTime
+	if err = rows.Scan(&claimed, &addr, &url, &code, &created, &updated); err != nil {
+		return
+	}
+	if claimed.Valid {
+		row = FulfillmentData{
+			Claimed:  claimed.Bool,
+			UserAddr: addr.String,
+			Created:  created.Time,
+			Updated:  updated.Time,
+			Url:      url.String,
+			Code:     code.String,
+
+			ContractAddr: contractAddr,
+			RedeemableId: redeemableId,
+			TokenId:      tokenId,
 		}
 	}
 
