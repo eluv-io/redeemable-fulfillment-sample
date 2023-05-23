@@ -1,8 +1,8 @@
 # redeemable-fulfillment-sample
 
-This repo contains sample code for a service that implements the fulfillment of a NFT redeemable-offer
+This repo contains sample code for a service that implements the fulfillment of an NFT redeemable-offer.
 
-Redeemable Offer Docs: https://elv-test-hub.web.app/advanced/tokens/#nft-redeemables
+Redeemable Offers are documented here: https://elv-test-hub.web.app/advanced/tokens/#nft-redeemables
 
 The flow is as follows:
      - server accepts signed message including the redemption transaction ID
@@ -17,7 +17,7 @@ It also implements a sample fulfillment -- a simple URL + code, mirroring the ca
 ## Getting Started
 
 - clone this repo
-- create a config/config.toml based on config/config-example.toml
+- create a `config/config.toml` based on `config/config-example.toml`
 - build and run:
 ```
 make build run
@@ -34,7 +34,7 @@ make version
 
 - POST `load/:contract_addr/:redeemable_id`
   - body: `{ "url": URL, "codes": [ list of codes... ] }`
-- insert codes into DB as unclaimed
+- inserts the codes into DB as unclaimed
 
 
 ### Wallet API

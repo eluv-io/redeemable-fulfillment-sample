@@ -99,11 +99,14 @@ func FulfillRedeemableOffer(fs *authority.FulfillmentService) gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, gin.H{"message": "error binding request body"})
 		}
 
-		request.Transaction = ctx.Query("transaction_id")
+		request.Transaction = ctx.Param("transaction_id")
 		request.UserAddr, err = utils.ExtractUserAddress(ctx)
 		if err != nil {
 			log.Warn("error extracting user address", "err", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"message": "error extracting user address"})
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "error extracting user address",
+				"err":     err,
+			})
 			return
 		}
 

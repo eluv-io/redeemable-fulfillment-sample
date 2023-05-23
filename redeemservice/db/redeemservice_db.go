@@ -71,6 +71,7 @@ func (fs *FulfillmentPersistence) context() map[string]interface{} {
 }
 
 func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
+	log.Trace("SetupFulfillment", "data", data)
 	if data.ContractAddr == "" || data.RedeemableId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
 		log.Debug("invalid data", "data", data)
 		err = errors.NoTrace("invalid load data", errors.K.Invalid, "data", data)
@@ -100,10 +101,22 @@ func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequest) (data TransactionData, err error) {
 	// TODO: figure out the data in the transaction
 	data = TransactionData{}
+
+	if request.Transaction == "tx-test-0000" {
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0x0ContractAddress",
+			RedeemableId: "0",
+			TokenId:      "1",
+		}
+	}
+
 	return
 }
 
 func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
+	log.Trace("FulfillRedeemableOffer", "request", request)
+
 	var tx TransactionData
 	if tx, err = fs.ResolveTransactionData(request); err != nil {
 		return

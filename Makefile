@@ -16,12 +16,12 @@ unittest:
 logs:
 	tail -F ~/ops/logs/fulfillmentd.log
 
-date = $(shell date)
-msg = '{ "url": "https://live.eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
-contract = '0xContract'
-redeemable = '0'
-tx = 'tx-test-0000'
-
+date=$(shell date)
+msg='{ "url": "https://live.eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
+contract=0xContractAddress
+redeemable=0
+tx=tx-test-0000
+h= -H "Content-Type: application/json"
 
 ## select a url
 # local dev url
@@ -45,18 +45,18 @@ version:
 
 load_codes:
 	@echo "todo:"
-	curl -s -X POST -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(redeemable) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(redeemable) | jq .
 
 fulfill_code:
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)" | jq .
 
 test_unauthorized:
 	@echo "test unauthorized:"
-	curl -s -X POST -d $(msg) -H 'Authorization: Bearer $(tok_unauth)' $(url)/fulfill/$(tx) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok_unauth)' $(url)/fulfill/$(tx) | jq .
 
 test_invalid_user:
 	@echo "test invalid user:"
-	curl -s -X POST -d $(msg) -H 'Authorization: Bearer $(tok2)' $(url)/fulfill/$(tx) | jq . || true  # direct path only; will be a 404 via nginx
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok2)' $(url)/fulfill/$(tx) | jq . || true  # direct path only; will be a 404 via nginx
 
 
 #
