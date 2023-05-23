@@ -29,9 +29,10 @@ import (
 var log = elog.Get("/fs/api")
 
 type FulfillmentResponse struct {
-	Message string `json:"message"`
-	Url     string `json:"url"`
-	Code    string `json:"code"`
+	Message     string             `json:"message"`
+	Url         string             `json:"url"`
+	Code        string             `json:"code"`
+	Transaction db.TransactionData `json:"transaction"`
 }
 
 type LoadRequest struct {
@@ -122,10 +123,10 @@ func FulfillRedeemableOffer(fs *authority.FulfillmentService) gin.HandlerFunc {
 		}
 
 		ret := FulfillmentResponse{
-			Message: "fulfilled redeemable offer",
-			Url:     data.Url,
-			Code:    data.Code,
-			//ContractAddr: "", RedeemableId: "", TokenId:"",
+			Message:     "fulfilled redeemable offer",
+			Url:         data.Url,
+			Code:        data.Code,
+			Transaction: data.ToTransactionData(),
 		}
 		ctx.JSON(http.StatusOK, ret)
 	}

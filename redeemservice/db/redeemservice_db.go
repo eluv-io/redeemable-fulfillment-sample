@@ -55,6 +55,15 @@ type FulfillmentData struct {
 	Code string `json:"code"`
 }
 
+func (fd *FulfillmentData) ToTransactionData() TransactionData {
+	return TransactionData{
+		UserAddr:     fd.UserAddr,
+		ContractAddr: fd.ContractAddr,
+		RedeemableId: fd.RedeemableId,
+		TokenId:      fd.TokenId,
+	}
+}
+
 func NewFulfillmentPersistence(cm *db.ConnectionManager) *FulfillmentPersistence {
 	log.Info("init FulfillmentPersistence", "cm", cm)
 	return &FulfillmentPersistence{pool: cm}
@@ -191,7 +200,6 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 		} else {
 			err = errors.NoTrace("unable to redeem", errors.K.Invalid, "request", request, "tx", tx)
 		}
-		return
 	}
 
 	return
