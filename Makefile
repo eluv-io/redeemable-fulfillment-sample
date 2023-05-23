@@ -3,6 +3,7 @@
 #
 
 build:
+	(cd version ; go generate)
 	go build -o bin/fulfillmentd cmd/main.go
 	ls -l ./bin/fulfillmentd
 	./bin/fulfillmentd
@@ -33,9 +34,6 @@ run:
 	@echo "Note: default config requires tunnel to DB on 127.0.0.1:26257"
 	./bin/fulfillmentd --config config/config.toml
 
-version:
-	curl -s $(url)/version | jq .
-
 
 #
 # these targets require an env vars tha contains a CF token:
@@ -63,7 +61,10 @@ test_out_of_codes:
 # helpers
 #
 
-.PHONY: config
+.PHONY: config version
 config:
 	vi  config/config.toml
+
+version:
+	curl -s $(url)/version | jq .
 

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"fulfillmentd/fulfillmentd"
 	"fulfillmentd/server"
 	"fulfillmentd/server/config"
-	"fulfillmentd/fulfillmentd"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/eluv-io/log-go/handlers/console"
@@ -31,7 +31,7 @@ var (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Sprintf("Usage: %s --config <config.toml>\n", DaemonName)
+		fmt.Printf("Usage: %s --config <config.toml>\n", DaemonName)
 		return
 	}
 

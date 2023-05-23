@@ -2,8 +2,9 @@ package fulfillmentd
 
 import (
 	"fmt"
-	"fulfillmentd/server"
 	api "fulfillmentd/redeemservice"
+	"fulfillmentd/server"
+	"fulfillmentd/version"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/gin-gonic/gin"
@@ -32,16 +33,19 @@ func Init(s *server.Server) error {
 
 func addBaseRoutes(engine *gin.Engine) {
 	defaultRoutes := []*server.Route{
-		GET("", func(ctx *gin.Context) { version(ctx) }),
-		GET("/version", func(ctx *gin.Context) { version(ctx) }),
+		GET("", func(ctx *gin.Context) { Version(ctx) }),
+		GET("/version", func(ctx *gin.Context) { Version(ctx) }),
 	}
 	routeGroup := server.NewGroup(defaultRoutes...)
 	routeGroup.HandleAllRoutes(engine)
 }
 
-func version(ctx *gin.Context) {
+func Version(ctx *gin.Context) {
 	resp := gin.H{
-		"version": "v.0.0.1",
+		"version":  "v" + version.BestVersion(),
+		"revision": version.Revision(),
+		"branch":   version.Branch(),
+		"date":     version.Date(),
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
