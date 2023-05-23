@@ -2,38 +2,44 @@
 
 This repo contains sample code for a service that implements the fulfillment of a NFT redeemable-offer
 
+Redeemable Offer Docs: https://elv-test-hub.web.app/advanced/tokens/#nft-redeemables
 
-## Requirements
-
-  - fulfill request - signed message including the redemption transaction ID
+The flow is as follows:
+     - server accepts signed message including the redemption transaction ID
      - server verifies that the signer is who redeemed
-     - verify not yet fulfilled
-     - server calls the fulfillment custom function (whatever needs to be done - our sample can simply write out a file or a db entry)
-     - if fulfillment succeeds - write down local state saying this offer is fulfilled
+     - server verifies not yet fulfilled
+     - server calls the fulfillment custom function
+     - if fulfillment succeeds, persists DB state that this offer is fulfilled
+
+It also implements a sample fulfillment -- a simple URL + code, mirroring the case of a coupon (the code) for a website purchase (the URL).
 
 
-## Sample fulfillment function
+## Getting Started
 
-This version returns a simple URL + code as the item that is fulfilled.
-
-
-## Redeemable Offer Docs
-
-https://elv-test-hub.web.app/advanced/tokens/#nft-redeemables
+- clone this repo
+- create a config/config.toml based on config/config-example.toml
+- build and run:
+```
+make build run
+```
+- smoke test:
+```
+make version
+```
 
 
 ## API
 
 ### Setup API
 
-- POST "load/:contract_addr/:redeemable_id"
+- POST `load/:contract_addr/:redeemable_id`
   - body: `{ "url": URL, "codes": [ list of codes... ] }`
 - insert codes into DB as unclaimed
 
 
 ### Wallet API
 
-- GET "fulfill/:transaction_id"
+- GET `fulfill/:transaction_id`
   - bearer auth token -> user address
 
 - response on success: url + code
