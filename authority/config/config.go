@@ -1,9 +1,5 @@
 package config
 
-import (
-	"time"
-)
-
 type DbConfig struct {
 	Username      string
 	Password      string
@@ -20,8 +16,6 @@ type DbConfig struct {
 }
 
 type AuthorityConfig struct {
-	DevMode             bool
-	ShutdownGracePeriod time.Duration
-	DbConfig            DbConfig
-	Port                int
+	DbConfig DbConfig
+	Port     int
 }
