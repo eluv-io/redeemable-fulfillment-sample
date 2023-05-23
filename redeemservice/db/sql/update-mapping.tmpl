@@ -1,0 +1,3 @@
+UPDATE {{.database}}.fulfillment_service
+SET claimed = true, claimer_token_id = $1, updated = now()
+WHERE contract_addr = $2 AND redeemable_id = $3
