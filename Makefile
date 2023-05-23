@@ -38,9 +38,8 @@ version:
 
 
 #
-# these targets require env vars tha contains CF tokens:
+# these targets require an env vars tha contains a CF token:
 #  tok = acspjc...
-#  tok_unauth = acspjc...
 #
 
 load_codes:
@@ -50,14 +49,15 @@ load_codes:
 fulfill_code:
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)" | jq .
 
-test_unauthorized:
-	@echo "test unauthorized:"
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok_unauth)' $(url)/fulfill/$(tx) | jq .
-
 test_invalid_user:
 	@echo "test invalid user:"
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok2)' $(url)/fulfill/$(tx) | jq . || true  # direct path only; will be a 404 via nginx
+	curl -s -H 'Authorization: Bearer $(tok)' $(url)/fulfill/tx-test-invaliduser | jq .
 
+test_out_of_codes:
+	@echo "use after load_codes"
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0000" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0001" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0002" | jq .
 
 #
 # helpers

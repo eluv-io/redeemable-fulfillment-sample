@@ -134,6 +134,13 @@ func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequ
 			RedeemableId: "0",
 			TokenId:      "3",
 		}
+	case "tx-test-invaliduser":
+		data = TransactionData{
+			UserAddr:     "0xUserAddr",
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "3",
+		}
 	}
 
 	return
