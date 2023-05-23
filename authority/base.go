@@ -6,8 +6,6 @@ import (
 	lg "github.com/eluv-io/log-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"reflect"
-	"runtime"
 )
 
 var log = lg.Get("/fs/authority")
@@ -73,30 +71,8 @@ func (g *group) AddSubs(s ...*group) *group {
 
 func (g *group) HandleAllRoutes(engine *gin.Engine) {
 	for _, rt := range g.routes {
-		//log.Trace("handle", "rt", rt, "handler", HandlerName(rt.handler))
 		engine.Handle(rt.verb, rt.path, rt.handler)
 	}
-}
-
-func HandlerName(handler gin.HandlerFunc) string {
-	return runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
-}
-
-func AddMiddleware(s *Server) {
-	s.Router.Use(defaultCORS)
-}
-
-func defaultCORS(ctx *gin.Context) {
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-	ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-
-	if ctx.Request.Method == "OPTIONS" {
-		ctx.AbortWithStatus(http.StatusNoContent)
-		return
-	}
-	ctx.Next()
 }
 
 type Route struct {

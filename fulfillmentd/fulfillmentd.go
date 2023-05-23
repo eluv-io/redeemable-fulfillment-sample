@@ -18,7 +18,7 @@ func Init(s *authority.Server) error {
 	s.FulfillmentService = authority.NewFulfillmentService(s)
 	log.Info("Init", "service", s.FulfillmentService)
 
-	AddBaseRoutes(s.Router)
+	addBaseRoutes(s.Router)
 	api.AddRoutes(s)
 	log.Info("registered routes")
 
@@ -30,16 +30,16 @@ func Init(s *authority.Server) error {
 	return nil
 }
 
-func AddBaseRoutes(engine *gin.Engine) {
+func addBaseRoutes(engine *gin.Engine) {
 	defaultRoutes := []*authority.Route{
-		GET("", func(ctx *gin.Context) { Version(ctx) }),
-		GET("/version", func(ctx *gin.Context) { Version(ctx) }),
+		GET("", func(ctx *gin.Context) { version(ctx) }),
+		GET("/version", func(ctx *gin.Context) { version(ctx) }),
 	}
 	routeGroup := authority.NewGroup(defaultRoutes...)
 	routeGroup.HandleAllRoutes(engine)
 }
 
-func Version(ctx *gin.Context) {
+func version(ctx *gin.Context) {
 	resp := gin.H{
 		"version": "v.0.0.1",
 	}
@@ -48,8 +48,4 @@ func Version(ctx *gin.Context) {
 
 func GET(path string, handler gin.HandlerFunc) *authority.Route {
 	return authority.NewRoute("GET", path, handler)
-}
-
-func POST(path string, handler gin.HandlerFunc) *authority.Route {
-	return authority.NewRoute("POST", path, handler)
 }
