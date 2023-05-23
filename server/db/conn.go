@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"fulfillmentd/authority/config"
+	"fulfillmentd/server/config"
 	elog "github.com/eluv-io/log-go"
 	"io/ioutil"
 	"time"

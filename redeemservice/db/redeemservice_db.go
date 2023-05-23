@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"embed"
-	"fulfillmentd/authority/db"
+	"fulfillmentd/server/db"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/jackc/pgx"

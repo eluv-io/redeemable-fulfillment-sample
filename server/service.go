@@ -1,4 +1,4 @@
-package authority
+package server
 
 import (
 	"fulfillmentd/redeemservice/db"

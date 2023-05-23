@@ -1,14 +1,14 @@
-package authority
+package server
 
 import (
-	"fulfillmentd/authority/config"
-	"fulfillmentd/authority/db"
+	"fulfillmentd/server/config"
+	"fulfillmentd/server/db"
 	lg "github.com/eluv-io/log-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-var log = lg.Get("/fs/authority")
+var log = lg.Get("/fs/server")
 
 type Server struct {
 	http        *http.Server

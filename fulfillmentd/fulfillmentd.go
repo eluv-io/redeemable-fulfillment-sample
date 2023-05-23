@@ -2,7 +2,7 @@ package fulfillmentd
 
 import (
 	"fmt"
-	"fulfillmentd/authority"
+	"fulfillmentd/server"
 	api "fulfillmentd/redeemservice"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
@@ -12,10 +12,10 @@ import (
 
 var log = elog.Get("/fs")
 
-func Init(s *authority.Server) error {
+func Init(s *server.Server) error {
 	s.Router = gin.Default()
 
-	s.FulfillmentService = authority.NewFulfillmentService(s)
+	s.FulfillmentService = server.NewFulfillmentService(s)
 	log.Info("Init", "service", s.FulfillmentService)
 
 	addBaseRoutes(s.Router)
@@ -31,11 +31,11 @@ func Init(s *authority.Server) error {
 }
 
 func addBaseRoutes(engine *gin.Engine) {
-	defaultRoutes := []*authority.Route{
+	defaultRoutes := []*server.Route{
 		GET("", func(ctx *gin.Context) { version(ctx) }),
 		GET("/version", func(ctx *gin.Context) { version(ctx) }),
 	}
-	routeGroup := authority.NewGroup(defaultRoutes...)
+	routeGroup := server.NewGroup(defaultRoutes...)
 	routeGroup.HandleAllRoutes(engine)
 }
 
@@ -46,6 +46,6 @@ func version(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func GET(path string, handler gin.HandlerFunc) *authority.Route {
-	return authority.NewRoute("GET", path, handler)
+func GET(path string, handler gin.HandlerFunc) *server.Route {
+	return server.NewRoute("GET", path, handler)
 }

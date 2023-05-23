@@ -18,7 +18,7 @@
 package api
 
 import (
-	"fulfillmentd/authority"
+	"fulfillmentd/server"
 	"fulfillmentd/redeemservice/db"
 	"fulfillmentd/utils"
 	elog "github.com/eluv-io/log-go"
@@ -46,14 +46,14 @@ type LoadResponse struct {
 	RedeemableId string `json:"redeemable_id"`
 }
 
-func AddRoutes(s *authority.Server) {
+func AddRoutes(s *server.Server) {
 	log.Info("Adding FS routes")
 	public := s.Router.Group("/")
 	public.POST("load/:contract_addr/:redeemable_id", LoadFulfillmentData(s.FulfillmentService))
 	public.GET("fulfill/:transaction_id", FulfillRedeemableOffer(s.FulfillmentService))
 }
 
-func LoadFulfillmentData(fs *authority.FulfillmentService) gin.HandlerFunc {
+func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 
@@ -90,7 +90,7 @@ func LoadFulfillmentData(fs *authority.FulfillmentService) gin.HandlerFunc {
 	}
 }
 
-func FulfillRedeemableOffer(fs *authority.FulfillmentService) gin.HandlerFunc {
+func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 

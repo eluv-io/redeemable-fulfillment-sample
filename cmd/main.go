@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"fulfillmentd/authority"
-	"fulfillmentd/authority/config"
+	"fulfillmentd/server"
+	"fulfillmentd/server/config"
 	"fulfillmentd/fulfillmentd"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
@@ -41,13 +41,13 @@ func main() {
 	}
 }
 
-func startServer(configFile string) (s *authority.Server, err error) {
+func startServer(configFile string) (s *server.Server, err error) {
 	cfg, err := loadConfig(configFile)
 	if err != nil {
 		return
 	}
 
-	s, err = authority.ConnectDb(cfg)
+	s, err = server.ConnectDb(cfg)
 	if err != nil {
 		return
 	}
