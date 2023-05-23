@@ -8,7 +8,9 @@ import (
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/eluv-io/log-go/handlers/console"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"path/filepath"
 )
@@ -82,6 +84,11 @@ func loadConfig(configFile string) (cfg *config.AuthorityConfig, err error) {
 		Caller:  &trueVal,
 	}
 	elog.SetDefault(logConfig)
+
+	gin.DefaultWriter = &lumberjack.Logger{
+		Filename:  cfgState.LogFile,
+		LocalTime: false,
+	}
 
 	if lh, ok := log.Handler().(*console.Handler); ok {
 		lh.WithTimestamps(true)

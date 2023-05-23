@@ -67,8 +67,27 @@ interface ("fulfillment custom function") with
 ```
 FulfillRedeemableOffer(contractAddr, offerId, tokenId, redeemingUserAddress string) interface{}
 ```
-and it accepts arbitrary data in repsonse.  The daemon then deliver the 
-metadata + marshalled interface as json. The sample returns `{ url, code }`.  
+and it accepts arbitrary data in response.  The daemon then delivers the
+metadata + marshalled interface as json.
 
-This portion has not been completed.
+The sample returns `{ url, code }`:
+
+`curl -s "http://localhost:2023/fulfill/tx-test-0000" | jq .`
+```json
+{
+  "message": "fulfilled redeemable offer",
+  "fulfillment_data": {
+    "url": "https://live.eluv.io/",
+    "code": "XYZ789"
+  },
+  "transaction": {
+    "user_addr": "0x39e9D567137217e8f7DAE73BF168db28D242Bb31",
+    "contract_addr": "0xContractAddress",
+    "redeemable_id": "0",
+    "token_id": "1"
+  }
+}
+```
+
+This splitting of the library and custom code has not been completed.
 
