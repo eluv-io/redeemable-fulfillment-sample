@@ -102,12 +102,28 @@ func (fs *FulfillmentPersistence) ResolveTransactionData(request FulfillmentRequ
 	// TODO: figure out the data in the transaction
 	data = TransactionData{}
 
-	if request.Transaction == "tx-test-0000" {
+	// mock data for testing from `make load_codes` + `make fulfill_code`
+	switch request.Transaction {
+	case "tx-test-0000":
 		data = TransactionData{
 			UserAddr:     request.UserAddr,
 			ContractAddr: "0xContractAddress",
 			RedeemableId: "0",
 			TokenId:      "1",
+		}
+	case "tx-test-0001":
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "2",
+		}
+	case "tx-test-0002":
+		data = TransactionData{
+			UserAddr:     request.UserAddr,
+			ContractAddr: "0xContractAddress",
+			RedeemableId: "0",
+			TokenId:      "3",
 		}
 	}
 
@@ -163,6 +179,19 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 		if resp.Claimed {
 			resp.UserAddr = tx.UserAddr
 		}
+	} else {
+		var unclaimed []string
+		unclaimed, err = fs.GetUnclaimed(tx.ContractAddr, tx.RedeemableId)
+		if err != nil {
+			return
+		}
+
+		if len(unclaimed) == 0 {
+			err = errors.NoTrace("no more redemption codes available", errors.K.NotFound, "request", request, "tx", tx)
+		} else {
+			err = errors.NoTrace("unable to redeem", errors.K.Invalid, "request", request, "tx", tx)
+		}
+		return
 	}
 
 	return
@@ -188,6 +217,37 @@ func (fs *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, t
 
 	if rows.Next() {
 		resp, err = scanFulfillmentData(rows, contractAddr, redeemableId, tokenId)
+	}
+
+	return
+}
+
+func (fs *FulfillmentPersistence) GetUnclaimed(contractAddr, redeemableId string) (unclaimed []string, err error) {
+	var stmt string
+	templateArgs := fs.context()
+	if stmt, err = mergeTemplate("sql/get-unclaimed.tmpl", templateArgs); err != nil {
+		return
+	}
+
+	var args []interface{}
+	args = append(args, contractAddr)
+	args = append(args, redeemableId)
+
+	var rows *pgx.Rows
+	if rows, err = fs.conn().Query(stmt, args...); err != nil {
+		return
+	}
+	defer rows.Close()
+
+	unclaimed = make([]string, 0)
+	for rows.Next() {
+		var url, code sql.NullString
+		if err = rows.Scan(&url, &code); err != nil {
+			return
+		}
+		if code.Valid {
+			unclaimed = append(unclaimed, code.String)
+		}
 	}
 
 	return

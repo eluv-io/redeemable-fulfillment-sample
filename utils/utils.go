@@ -34,7 +34,7 @@ func ExtractUserAddress(ctx *gin.Context) (addr string, err error) {
 		return
 	}
 	addr = tok.EthAddr.Hex()
-	log.Debug("ExtractUserAddress", "addr", addr, "json", tok.AsJSON())
+	//log.Trace("ExtractUserAddress", "addr", addr, "json", tok.AsJSON())
 
 	return
 }
