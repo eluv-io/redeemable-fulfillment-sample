@@ -5,7 +5,7 @@
 // {
 //  "message": "fulfilled redeemable offer",
 //  "fulfillment_data": {
-//    "url": "https://live.eluv.io/",
+//    "url": "https://eluv.io/",
 //    "code": "XYZ789"
 //  },
 //  "transaction": {
@@ -16,16 +16,13 @@
 //  }
 //}
 //
-// $ curl -s http://localhost:2023/load/:token_addr/:redeemable_id --data '{ "url": "https://live.eluv.io/", "codes": [ "ABC123", "XYZ789" ] }'
+// $ curl -s http://localhost:2023/load/:token_addr/:redeemable_id --data '{ "url": "https://eluv.io/", "codes": [ "ABC123", "XYZ789" ] }'
 // {
 //  "message": "loaded fulfillment data for a redeemable offer",
 //  "contract_addr": "0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9",
 //  "offer_id": "0",
-//  "url": "https://live.eluv.io/",
-//  "codes": [
-//    "ABC123",
-//    "XYZ789"
-//  ]
+//  "url": "https://eluv.io/",
+//  "codes": [ "ABC123", "XYZ789" ]
 //}
 
 package api

@@ -30,7 +30,7 @@ h= -H "Content-Type: application/json"
 # local dev url
 url = http://localhost:2023
 # deployed sample url
-#url = https://appsvc.svc.eluv.io/codefulfillment
+#url = https://appsvc.svc.eluv.io/fulfillment
 
 run:
 	@echo "Note: default config requires tunnel to DB on 127.0.0.1:26257"
