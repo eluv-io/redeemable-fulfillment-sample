@@ -13,6 +13,9 @@ The flow is as follows:
 
 The repo also implements a sample fulfillment -- a simple URL + code, mirroring the case of a coupon (the code) for a website purchase (the URL).
 
+Here's a sample redemption transaction on our demov3 blockchain:
+https://eluvio.tryethernal.com/transaction/0x97686b790728669a54898d812ed59afebab522da03b8161228f0f74cd6693187
+
 
 ## Getting Started
 
