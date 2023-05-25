@@ -40,9 +40,11 @@ type LoadRequest struct {
 }
 
 type LoadResponse struct {
-	Message      string `json:"message"`
-	ContractAddr string `json:"contract_addr"`
-	RedeemableId string `json:"redeemable_id"`
+	Message      string   `json:"message"`
+	ContractAddr string   `json:"contract_addr"`
+	OfferId      string   `json:"offer_id"`
+	Url          string   `json:"url"`
+	Codes        []string `json:"codes"`
 }
 
 func AddRoutes(s *server.Server) {
@@ -66,10 +68,10 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 		redeemableId := ctx.Param("redeemable_id")
 
 		setupData := db.SetupData{
-			ContractAddr: contractAddr,
-			RedeemableId: redeemableId,
-			Url:          data.Url,
-			Codes:        data.Codes,
+			ContractAddress: contractAddr,
+			OfferId:         redeemableId,
+			Url:             data.Url,
+			Codes:           data.Codes,
 		}
 		if err = fs.SetupFulfillment(setupData); err != nil {
 			log.Debug("error with data setup", "err", err)
@@ -83,7 +85,9 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 		ret := LoadResponse{
 			Message:      "loaded fulfillment data for a redeemable offer",
 			ContractAddr: contractAddr,
-			RedeemableId: redeemableId,
+			OfferId:      redeemableId,
+			Url:          data.Url,
+			Codes:        data.Codes,
 		}
 		ctx.JSON(http.StatusOK, ret)
 	}
@@ -100,7 +104,7 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 		}
 
 		request.Transaction = ctx.Param("transaction_id")
-		request.UserAddr, err = utils.ExtractUserAddress(ctx)
+		request.UserAddress, err = utils.ExtractUserAddress(ctx)
 		if err != nil {
 			log.Warn("error extracting user address", "err", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{

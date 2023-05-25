@@ -33,7 +33,7 @@ func ExtractUserAddress(ctx *gin.Context) (addr string, err error) {
 	if err != nil {
 		return
 	}
-	addr = tok.EthAddr.Hex()
+	addr = strings.ToLower(tok.EthAddr.Hex())
 	//log.Trace("ExtractUserAddress", "addr", addr, "json", tok.AsJSON())
 
 	return

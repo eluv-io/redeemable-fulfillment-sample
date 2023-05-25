@@ -27,31 +27,31 @@ type FulfillmentPersistence struct {
 }
 
 type SetupData struct {
-	ContractAddr string   `json:"contract_addr"`
-	RedeemableId string   `json:"redeemable_id"`
-	Url          string   `json:"url"`
-	Codes        []string `json:"codes"`
+	ContractAddress string   `json:"contract_address"`
+	OfferId         string   `json:"offer_id"`
+	Url             string   `json:"url"`
+	Codes           []string `json:"codes"`
 }
 
 type RedemptionTransaction struct {
-	ContractAddress      string `json:"contract_addr"`
-	RedeemerAddress      string `json:"user_addr"`
-	TokenId              int64  `json:"token_id"`
-	OfferId              uint8  `json:"offer_id"`
-	TransactionIsPending bool   `json:"is_pending"`
+	ContractAddress string `json:"contract_address"`
+	RedeemerAddress string `json:"user_address"`
+	TokenId         int64  `json:"token_id"`
+	OfferId         uint8  `json:"offer_id"`
+	IsPending       bool   `json:"-"`
 }
 
 type FulfillmentRequest struct {
 	Transaction string `json:"transaction"`
-	UserAddr    string `json:"user_addr"`
+	UserAddress string `json:"user_address"`
 }
 
 type FulfillmentData struct {
-	ContractAddr string    `json:"contract_addr"`
+	ContractAddr string    `json:"contract_address"`
 	OfferId      string    `json:"offer_id"`
-	TokenId      string    `json:"Token_id"`
+	TokenId      string    `json:"token_id"`
 	Claimed      bool      `json:"claimed"`
-	UserAddr     string    `json:"user_addr"`
+	UserAddr     string    `json:"user_address"`
 	Created      time.Time `json:"created"`
 	Updated      time.Time `json:"updated"`
 
@@ -88,7 +88,7 @@ func (fp *FulfillmentPersistence) context() map[string]interface{} {
 
 func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 	log.Debug("SetupFulfillment", "data", data)
-	if data.ContractAddr == "" || data.RedeemableId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
+	if data.ContractAddress == "" || data.OfferId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
 		log.Debug("invalid data", "data", data)
 		err = errors.NoTrace("invalid load data", errors.K.Invalid, "data", data)
 		return
@@ -101,8 +101,8 @@ func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 		}
 
 		var args []interface{}
-		args = append(args, data.ContractAddr)
-		args = append(args, data.RedeemableId)
+		args = append(args, data.ContractAddress)
+		args = append(args, data.OfferId)
 		args = append(args, data.Url)
 		args = append(args, code)
 
@@ -125,7 +125,7 @@ func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	tokenId := fmt.Sprintf("%d", tx.TokenId)
 	log.Debug("FulfillRedeemableOffer", "request", fmt.Sprintf("%+v", request), "tx", fmt.Sprintf("%+v", tx), "offerId", offerId, "tokenId", tokenId)
 
-	if request.UserAddr != tx.RedeemerAddress {
+	if request.UserAddress != tx.RedeemerAddress {
 		err = errors.NoTrace("mismatched user address", errors.K.Invalid, "request", request, "tx", tx)
 		return
 	}
