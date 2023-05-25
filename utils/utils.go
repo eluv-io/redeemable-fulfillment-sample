@@ -14,6 +14,13 @@ import (
 	"strings"
 )
 
+func IfElse[T any](cond bool, trueVal, falseVal T) T {
+	if cond {
+		return trueVal
+	}
+	return falseVal
+}
+
 func ExtractUserAddress(ctx *gin.Context) (addr string, err error) {
 	e := errors.TemplateNoTrace("ExtractUserAddress", errors.K.Invalid)
 

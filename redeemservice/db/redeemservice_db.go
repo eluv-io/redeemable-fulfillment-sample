@@ -22,8 +22,8 @@ var statementsFS embed.FS
 var log = elog.Get("/fs/db")
 
 type FulfillmentPersistence struct {
-	pool   *db.ConnectionManager
-	ethUrl string
+	pool            *db.ConnectionManager
+	ethUrlByNetwork map[string]string
 }
 
 type SetupData struct {
@@ -44,6 +44,7 @@ type RedemptionTransaction struct {
 type FulfillmentRequest struct {
 	Transaction string `json:"transaction"`
 	UserAddress string `json:"user_address"`
+	Network     string `json:"network"`
 }
 
 type FulfillmentData struct {
@@ -59,31 +60,9 @@ type FulfillmentData struct {
 	Code string `json:"code"`
 }
 
-func (fd *FulfillmentData) ToTransactionData() RedemptionTransaction {
-	tid, _ := strconv.ParseInt(fd.TokenId, 10, 64)
-	var oid uint8
-	_, _ = fmt.Scan(fd.OfferId, &oid)
-	return RedemptionTransaction{
-		RedeemerAddress: fd.UserAddr,
-		ContractAddress: fd.ContractAddr,
-		TokenId:         tid,
-		OfferId:         oid,
-	}
-}
-
-func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrl string) *FulfillmentPersistence {
+func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrls map[string]string) *FulfillmentPersistence {
 	log.Info("init FulfillmentPersistence", "cm", cm)
-	return &FulfillmentPersistence{pool: cm, ethUrl: ethUrl}
-}
-
-func (fp *FulfillmentPersistence) conn() *pgx.ConnPool {
-	return fp.pool.GetConn()
-}
-
-func (fp *FulfillmentPersistence) context() map[string]interface{} {
-	return map[string]interface{}{
-		"database": "fulfillmentservice",
-	}
+	return &FulfillmentPersistence{pool: cm, ethUrlByNetwork: ethUrls}
 }
 
 func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
@@ -262,6 +241,18 @@ func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId str
 	return
 }
 
+func (fd *FulfillmentData) ToTransaction() RedemptionTransaction {
+	tid, _ := strconv.ParseInt(fd.TokenId, 10, 64)
+	var oid uint8
+	_, _ = fmt.Scan(fd.OfferId, &oid)
+	return RedemptionTransaction{
+		RedeemerAddress: fd.UserAddr,
+		ContractAddress: fd.ContractAddr,
+		TokenId:         tid,
+		OfferId:         oid,
+	}
+}
+
 var whitespace = regexp.MustCompile(`\s+`)
 
 func mergeTemplate(path string, ctx map[string]interface{}) (stmt string, err error) {
@@ -281,4 +272,14 @@ func mergeTemplate(path string, ctx map[string]interface{}) (stmt string, err er
 
 	stmt = whitespace.ReplaceAllString(buf.String(), " ")
 	return
+}
+
+func (fp *FulfillmentPersistence) conn() *pgx.ConnPool {
+	return fp.pool.GetConn()
+}
+
+func (fp *FulfillmentPersistence) context() map[string]interface{} {
+	return map[string]interface{}{
+		"database": "fulfillmentservice",
+	}
 }

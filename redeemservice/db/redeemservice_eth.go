@@ -14,8 +14,9 @@ import (
 // ToRedeemable converts based on https://gist.github.com/elv-preethi/44e0a809d3e7daa4e7713d6b23ead136
 func (fp *FulfillmentPersistence) ToRedeemable(fr FulfillmentRequest) (redemption RedemptionTransaction, err error) {
 	// get data from tx
+	log.Debug("using eth network", "network", fr.Network)
 	var ec *ethclient.Client
-	ec, err = ethclient.Dial(fp.ethUrl)
+	ec, err = ethclient.Dial(fp.ethUrlByNetwork[fr.Network])
 	if err != nil {
 		return
 	}

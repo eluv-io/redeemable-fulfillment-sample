@@ -27,7 +27,9 @@ type ConfigState struct {
 
 const (
 	DaemonName = "fulfillmentd"
-	ElvName    = "elv"
+	ElvSection = "elv"
+	Main       = "main"
+	Demov3     = "demov3"
 )
 
 var (
@@ -73,7 +75,8 @@ func loadConfig(configFile string) (cfg *config.AuthorityConfig, err error) {
 	viper.SetDefault(DaemonName+".log_handler", "console")
 	viper.SetDefault(DaemonName+".verbosity", 3)
 
-	viper.SetDefault(ElvName+".config_url", "https://main.net955305.contentfabric.io/config")
+	viper.SetDefault(ElvSection+"."+Main+".config_url", "https://main.net955305.contentfabric.io/config")
+	viper.SetDefault(ElvSection+"."+Demov3+".config_url", "https://demov3.net955210.contentfabric.io/config")
 
 	viper.SetConfigFile(configFile)
 
@@ -117,12 +120,17 @@ func getBaseConfig(cfg *config.AuthorityConfig) (err error) {
 		return
 	}
 
-	cfg.ContentFabricConfigUrl = viper.GetString(ElvName + ".config_url")
-	cfg.EthUrl, err = getEthUrlFromConfigUrl(cfg.ContentFabricConfigUrl)
-	if err != nil {
-		return
+	cfg.EthUrlsByNetwork = make(map[string]string)
+	for _, net := range []string{Main, Demov3} {
+		contentFabricConfigUrl := viper.GetString(ElvSection + "-" + net + ".config_url")
+		var ethUrl string
+		ethUrl, err = getEthUrlFromConfigUrl(contentFabricConfigUrl)
+		if err != nil {
+			return
+		}
+		cfg.EthUrlsByNetwork[net] = ethUrl
 	}
-	log.Debug("getBaseConfig", "eth_url", cfg.EthUrl)
+	log.Info("all eth nets", "eth_urls", cfg.EthUrlsByNetwork)
 
 	cfg.Port = viper.GetInt(DaemonName + ".service_port")
 

@@ -2,18 +2,31 @@
 // Redeemable Offer Fulfillment API interface:
 //
 // $ curl -s http://localhost:2023/fulfill/:tx
-//  {
-//    "message": "fulfilled redeemable offer",
+// {
+//  "message": "fulfilled redeemable offer",
+//  "fulfillment_data": {
 //    "url": "https://live.eluv.io/",
-//    "code": "UPv7uzPs",
+//    "code": "XYZ789"
+//  },
+//  "transaction": {
+//    "contract_address": "0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9",
+//    "user_address": "0xb516b92fe8f422555f0d04ef139c6a68fe57af08",
+//    "token_id": 34,
+//    "offer_id": 0
 //  }
+//}
 //
 // $ curl -s http://localhost:2023/load/:token_addr/:redeemable_id --data '{ "url": "https://live.eluv.io/", "codes": [ "ABC123", "XYZ789" ] }'
-//  {
-//    "message": "loaded fulfillment data for a redeemable offer",
-//    "token_addr": "0x....",
-//    "redeemable_id": 0,
-//  }
+// {
+//  "message": "loaded fulfillment data for a redeemable offer",
+//  "contract_addr": "0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9",
+//  "offer_id": "0",
+//  "url": "https://live.eluv.io/",
+//  "codes": [
+//    "ABC123",
+//    "XYZ789"
+//  ]
+//}
 
 package api
 
@@ -93,6 +106,14 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 	}
 }
 
+// FulfillRedeemableOffer godoc
+// @ID offer-redemption
+// @Summary FulfillRedeemableOffer
+// @Description FulfillRedeemableOffer
+// @Param transaction_id path string true "blockchain transaction id that shows the redeemable offer was redeemed"
+// @Param network query string false "which ELV network to look up transaction: 'main' or 'demov3'; defaults to main"
+// @Produce  json
+// @Router /fulfill/:transaction_id [GET]
 func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
@@ -114,6 +135,8 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 			return
 		}
 
+		request.Network = utils.IfElse(ctx.Query("network") == "", "main", ctx.Query("network"))
+
 		var data db.FulfillmentData
 		data, err = fs.FulfillRedeemableOffer(request)
 		if err != nil {
@@ -134,7 +157,7 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 				Url:  data.Url,
 				Code: data.Code,
 			},
-			Transaction: data.ToTransactionData(),
+			Transaction: data.ToTransaction(),
 		}
 		ctx.JSON(http.StatusOK, ret)
 	}

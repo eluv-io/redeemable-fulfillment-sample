@@ -16,8 +16,7 @@ type DbConfig struct {
 }
 
 type AuthorityConfig struct {
-	DbConfig               DbConfig
-	Port                   int
-	EthUrl                 string
-	ContentFabricConfigUrl string
+	DbConfig         DbConfig
+	Port             int
+	EthUrlsByNetwork map[string]string
 }

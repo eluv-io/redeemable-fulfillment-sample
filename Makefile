@@ -36,6 +36,8 @@ run:
 	@echo "Note: default config requires tunnel to DB on 127.0.0.1:26257"
 	./bin/fulfillmentd --config config/config.toml
 
+build_and_run_with_logs:
+	( make build && (make run & sleep 2 && make logs))
 
 #
 # these targets require an env vars tha contains a CF token:
@@ -47,20 +49,20 @@ load_codes:
 	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(offerId) | jq .
 
 test_fulfill_code:
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(test_tx)" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(test_tx)?network=demov3" | jq .
 
 fulfill_code:
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)?network=demov3" | jq .
 
 test_invalid_user:
 	@echo "test invalid user:"
-	curl -s -H 'Authorization: Bearer $(tok)' $(url)/fulfill/tx-test-invaliduser | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' $(url)/fulfill/tx-test-invaliduser?network=demov3 | jq .
 
 test_out_of_codes:
 	@echo "use after load_codes"
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0000" | jq .
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0001" | jq .
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0002" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0000?network=demov3" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0001?network=demov3" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0002?network=demov3" | jq .
 
 #
 # helpers
