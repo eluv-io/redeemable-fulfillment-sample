@@ -10,7 +10,7 @@ type FulfillmentService struct {
 
 func NewFulfillmentService(s *Server) *FulfillmentService {
 	return &FulfillmentService{
-		db: db.NewFulfillmentPersistence(s.ConnectionManager),
+		db: db.NewFulfillmentPersistence(s.ConnectionManager, s.Cfg.EthUrl),
 	}
 }
 

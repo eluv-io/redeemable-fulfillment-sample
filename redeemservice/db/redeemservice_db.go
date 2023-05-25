@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"database/sql"
 	"embed"
+	"fmt"
 	"fulfillmentd/server/db"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/jackc/pgx"
 	"io/fs"
 	"regexp"
+	"strconv"
 	"text/template"
 	"time"
 )
@@ -20,7 +22,8 @@ var statementsFS embed.FS
 var log = elog.Get("/fs/db")
 
 type FulfillmentPersistence struct {
-	pool *db.ConnectionManager
+	pool   *db.ConnectionManager
+	ethUrl string
 }
 
 type SetupData struct {
@@ -30,11 +33,12 @@ type SetupData struct {
 	Codes        []string `json:"codes"`
 }
 
-type TransactionData struct {
-	UserAddr     string `json:"user_addr"`
-	ContractAddr string `json:"contract_addr"`
-	RedeemableId string `json:"redeemable_id"`
-	TokenId      string `json:"token_id"`
+type RedemptionTransaction struct {
+	ContractAddress      string `json:"contract_addr"`
+	RedeemerAddress      string `json:"user_addr"`
+	TokenId              int64  `json:"token_id"`
+	OfferId              uint8  `json:"offer_id"`
+	TransactionIsPending bool   `json:"is_pending"`
 }
 
 type FulfillmentRequest struct {
@@ -44,7 +48,7 @@ type FulfillmentRequest struct {
 
 type FulfillmentData struct {
 	ContractAddr string    `json:"contract_addr"`
-	RedeemableId string    `json:"redeemable_id"`
+	OfferId      string    `json:"offer_id"`
 	TokenId      string    `json:"Token_id"`
 	Claimed      bool      `json:"claimed"`
 	UserAddr     string    `json:"user_addr"`
@@ -55,31 +59,34 @@ type FulfillmentData struct {
 	Code string `json:"code"`
 }
 
-func (fd *FulfillmentData) ToTransactionData() TransactionData {
-	return TransactionData{
-		UserAddr:     fd.UserAddr,
-		ContractAddr: fd.ContractAddr,
-		RedeemableId: fd.RedeemableId,
-		TokenId:      fd.TokenId,
+func (fd *FulfillmentData) ToTransactionData() RedemptionTransaction {
+	tid, _ := strconv.ParseInt(fd.TokenId, 10, 64)
+	var oid uint8
+	_, _ = fmt.Scan(fd.OfferId, &oid)
+	return RedemptionTransaction{
+		RedeemerAddress: fd.UserAddr,
+		ContractAddress: fd.ContractAddr,
+		TokenId:         tid,
+		OfferId:         oid,
 	}
 }
 
-func NewFulfillmentPersistence(cm *db.ConnectionManager) *FulfillmentPersistence {
+func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrl string) *FulfillmentPersistence {
 	log.Info("init FulfillmentPersistence", "cm", cm)
-	return &FulfillmentPersistence{pool: cm}
+	return &FulfillmentPersistence{pool: cm, ethUrl: ethUrl}
 }
 
-func (fs *FulfillmentPersistence) conn() *pgx.ConnPool {
-	return fs.pool.GetConn()
+func (fp *FulfillmentPersistence) conn() *pgx.ConnPool {
+	return fp.pool.GetConn()
 }
 
-func (fs *FulfillmentPersistence) context() map[string]interface{} {
+func (fp *FulfillmentPersistence) context() map[string]interface{} {
 	return map[string]interface{}{
 		"database": "fulfillmentservice",
 	}
 }
 
-func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
+func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 	log.Debug("SetupFulfillment", "data", data)
 	if data.ContractAddr == "" || data.RedeemableId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
 		log.Debug("invalid data", "data", data)
@@ -89,7 +96,7 @@ func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 
 	for _, code := range data.Codes {
 		var stmt string
-		if stmt, err = mergeTemplate("sql/add-mapping.tmpl", fs.context()); err != nil {
+		if stmt, err = mergeTemplate("sql/add-mapping.tmpl", fp.context()); err != nil {
 			return
 		}
 
@@ -99,7 +106,7 @@ func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 		args = append(args, data.Url)
 		args = append(args, code)
 
-		if _, err = fs.conn().Exec(stmt, args...); err != nil {
+		if _, err = fp.conn().Exec(stmt, args...); err != nil {
 			return
 		}
 	}
@@ -107,20 +114,23 @@ func (fs *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 	return
 }
 
-func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
-	log.Debug("FulfillRedeemableOffer", "request", request)
+func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
 
-	var tx TransactionData
-	if tx, err = fs.resolveTransactionData(request); err != nil {
+	var tx RedemptionTransaction
+	if tx, err = fp.resolveTransactionData(request); err != nil {
+		log.Warn("error resolving tx", "error", err)
 		return
 	}
+	offerId := fmt.Sprintf("%d", tx.OfferId)
+	tokenId := fmt.Sprintf("%d", tx.TokenId)
+	log.Debug("FulfillRedeemableOffer", "request", fmt.Sprintf("%+v", request), "tx", fmt.Sprintf("%+v", tx), "offerId", offerId, "tokenId", tokenId)
 
-	if request.UserAddr != tx.UserAddr {
+	if request.UserAddr != tx.RedeemerAddress {
 		err = errors.NoTrace("mismatched user address", errors.K.Invalid, "request", request, "tx", tx)
 		return
 	}
 
-	resp, err = fs.GetRedeemedOffer(tx.ContractAddr, tx.RedeemableId, tx.TokenId)
+	resp, err = fp.GetRedeemedOffer(tx.ContractAddress, offerId, tokenId)
 	if err != nil {
 		return
 	}
@@ -130,32 +140,32 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	}
 
 	var stmt string
-	templateArgs := fs.context()
+	templateArgs := fp.context()
 	if stmt, err = mergeTemplate("sql/update-mapping.tmpl", templateArgs); err != nil {
 		return
 	}
 
 	var args []interface{}
-	args = append(args, tx.TokenId)
-	args = append(args, tx.UserAddr)
-	args = append(args, tx.ContractAddr)
-	args = append(args, tx.RedeemableId)
+	args = append(args, tokenId)
+	args = append(args, tx.RedeemerAddress)
+	args = append(args, tx.ContractAddress)
+	args = append(args, offerId)
 	//log.Trace("FulfillRedeemableOffer", "stmt", stmt, "args", args)
 
 	var rows *pgx.Rows
-	if rows, err = fs.conn().Query(stmt, args...); err != nil {
+	if rows, err = fp.conn().Query(stmt, args...); err != nil {
 		return
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		resp, err = scanFulfillmentData(rows, tx.ContractAddr, tx.RedeemableId, tx.TokenId)
+		resp, err = scanFulfillmentData(rows, tx.ContractAddress, offerId, tokenId)
 		if resp.Claimed {
-			resp.UserAddr = tx.UserAddr
+			resp.UserAddr = tx.RedeemerAddress
 		}
 	} else {
 		var unclaimed []string
-		unclaimed, err = fs.GetUnclaimed(tx.ContractAddr, tx.RedeemableId)
+		unclaimed, err = fp.GetUnclaimed(tx.ContractAddress, offerId)
 		if err != nil {
 			return
 		}
@@ -170,9 +180,9 @@ func (fs *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	return
 }
 
-func (fs *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, tokenId string) (resp FulfillmentData, err error) {
+func (fp *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, tokenId string) (resp FulfillmentData, err error) {
 	var stmt string
-	templateArgs := fs.context()
+	templateArgs := fp.context()
 	if stmt, err = mergeTemplate("sql/get-mapping.tmpl", templateArgs); err != nil {
 		return
 	}
@@ -183,7 +193,7 @@ func (fs *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, t
 	args = append(args, tokenId)
 
 	var rows *pgx.Rows
-	if rows, err = fs.conn().Query(stmt, args...); err != nil {
+	if rows, err = fp.conn().Query(stmt, args...); err != nil {
 		return
 	}
 	defer rows.Close()
@@ -195,9 +205,10 @@ func (fs *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, t
 	return
 }
 
-func (fs *FulfillmentPersistence) GetUnclaimed(contractAddr, redeemableId string) (unclaimed []string, err error) {
+func (fp *FulfillmentPersistence) GetUnclaimed(contractAddr, redeemableId string) (unclaimed []string, err error) {
+	log.Debug("GetUnclaimed", "contractAddr", contractAddr, "redeemableId", redeemableId)
 	var stmt string
-	templateArgs := fs.context()
+	templateArgs := fp.context()
 	if stmt, err = mergeTemplate("sql/get-unclaimed.tmpl", templateArgs); err != nil {
 		return
 	}
@@ -207,7 +218,7 @@ func (fs *FulfillmentPersistence) GetUnclaimed(contractAddr, redeemableId string
 	args = append(args, redeemableId)
 
 	var rows *pgx.Rows
-	if rows, err = fs.conn().Query(stmt, args...); err != nil {
+	if rows, err = fp.conn().Query(stmt, args...); err != nil {
 		return
 	}
 	defer rows.Close()
@@ -243,7 +254,7 @@ func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId str
 			Code:     code.String,
 
 			ContractAddr: contractAddr,
-			RedeemableId: redeemableId,
+			OfferId:      redeemableId,
 			TokenId:      tokenId,
 		}
 	}
@@ -269,48 +280,5 @@ func mergeTemplate(path string, ctx map[string]interface{}) (stmt string, err er
 	}
 
 	stmt = whitespace.ReplaceAllString(buf.String(), " ")
-	return
-}
-
-// resolveTransactionData does an external query to the ELV blockchain to resolve the data from in the request transaction.
-// It also provides mock data for testing from `make load_codes` + `make fulfill_code`
-//
-// TODO: configure and query eth endpoint for the data in the transaction
-//
-func (fs *FulfillmentPersistence) resolveTransactionData(request FulfillmentRequest) (data TransactionData, err error) {
-
-	data = TransactionData{}
-
-	switch request.Transaction {
-	case "tx-test-0000":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "1",
-		}
-	case "tx-test-0001":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "2",
-		}
-	case "tx-test-0002":
-		data = TransactionData{
-			UserAddr:     request.UserAddr,
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "3",
-		}
-	case "tx-test-invaliduser":
-		data = TransactionData{
-			UserAddr:     "0xUserAddr",
-			ContractAddr: "0xContractAddress",
-			RedeemableId: "0",
-			TokenId:      "3",
-		}
-	}
-
 	return
 }

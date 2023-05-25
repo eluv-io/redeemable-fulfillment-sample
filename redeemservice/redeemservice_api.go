@@ -29,9 +29,9 @@ import (
 var log = elog.Get("/fs/api")
 
 type FulfillmentResponse struct {
-	Message         string             `json:"message"`
-	FulfillmentData interface{}        `json:"fulfillment_data"`
-	Transaction     db.TransactionData `json:"transaction"`
+	Message         string                   `json:"message"`
+	FulfillmentData interface{}              `json:"fulfillment_data"`
+	Transaction     db.RedemptionTransaction `json:"transaction"`
 }
 
 type LoadRequest struct {

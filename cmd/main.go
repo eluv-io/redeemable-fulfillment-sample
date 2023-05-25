@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"fulfillmentd/fulfillmentd"
 	"fulfillmentd/server"
@@ -11,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -24,6 +27,7 @@ type ConfigState struct {
 
 const (
 	DaemonName = "fulfillmentd"
+	ElvName    = "elv"
 )
 
 var (
@@ -68,6 +72,9 @@ func loadConfig(configFile string) (cfg *config.AuthorityConfig, err error) {
 	viper.SetDefault(DaemonName+".log_file", DaemonName)
 	viper.SetDefault(DaemonName+".log_handler", "console")
 	viper.SetDefault(DaemonName+".verbosity", 3)
+
+	viper.SetDefault(ElvName+".config_url", "https://main.net955305.contentfabric.io/config")
+
 	viper.SetConfigFile(configFile)
 
 	cfg = &config.AuthorityConfig{}
@@ -110,6 +117,13 @@ func getBaseConfig(cfg *config.AuthorityConfig) (err error) {
 		return
 	}
 
+	cfg.ContentFabricConfigUrl = viper.GetString(ElvName + ".config_url")
+	cfg.EthUrl, err = getEthUrlFromConfigUrl(cfg.ContentFabricConfigUrl)
+	if err != nil {
+		return
+	}
+	log.Debug("getBaseConfig", "eth_url", cfg.EthUrl)
+
 	cfg.Port = viper.GetInt(DaemonName + ".service_port")
 
 	return
@@ -129,7 +143,7 @@ func loadConfigState(configState *ConfigState, prefix string) error {
 
 	configState.LogFile = viper.GetString(prefix + ".log_file")
 	configState.LogHandler = viper.GetString(prefix + ".log_handler")
-	configState.Verbosity = toVerbosity(viper.GetInt(prefix + ".verbosity"))
+	configState.Verbosity = viper.GetString(prefix + ".verbosity")
 
 	return nil
 }
@@ -162,21 +176,41 @@ func getDbConfig() (dbCfg config.DbConfig, err error) {
 	return
 }
 
-func toVerbosity(verbosity int) string {
-	switch verbosity {
-	case 0:
-		return "fatal"
-	case 1:
-		return "error"
-	case 2:
-		return "warn"
-	case 3:
-		return "info"
-	case 4:
-		return "debug"
-	case 5:
-		return "trace"
-	default:
-		panic("bad verbosity level")
+// getEthUrlFromConfigUrl loads the fabric config url js data and then pulls out the first eth endpoint in it.
+func getEthUrlFromConfigUrl(configUrl string) (ethUrl string, err error) {
+	var resp *http.Response
+	var body []byte
+	var js map[string]interface{}
+
+	if resp, err = http.Get(configUrl); err != nil {
+		return
 	}
+	defer resp.Body.Close()
+
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	if err = json.Unmarshal(body, &js); err != nil {
+		return
+	}
+
+	if js["network"] == nil {
+		err = errors.NoTrace("no network in config")
+		return
+	}
+
+	if js["network"].(map[string]interface{})["services"] == nil {
+		err = errors.NoTrace("no services in config")
+		return
+	}
+
+	if js["network"].(map[string]interface{})["services"].(map[string]interface{})["ethereum_api"] == nil {
+		err = errors.NoTrace("no ethereum_api in config")
+		return
+	}
+
+	ethUrl = js["network"].(map[string]interface{})["services"].(map[string]interface{})["ethereum_api"].([]interface{})[0].(string)
+
+	return
 }

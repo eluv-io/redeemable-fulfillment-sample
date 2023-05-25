@@ -19,8 +19,8 @@ logs:
 
 date=$(shell date)
 msg='{ "url": "https://live.eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
-contract=0xContractAddress
-redeemable=0
+contract=0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9
+offerId=0
 tx=tx-test-0000
 h= -H "Content-Type: application/json"
 
@@ -41,8 +41,8 @@ run:
 #
 
 load_codes:
-	@echo "todo:"
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(redeemable) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/0x0/$(offerId) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(offerId) | jq .
 
 fulfill_code:
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)" | jq .
