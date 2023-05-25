@@ -35,14 +35,41 @@ make version
 - POST `load/:contract_addr/:redeemable_id`
   - body: `{ "url": URL, "codes": [ list of codes... ] }`
 - inserts the codes into DB as unclaimed
-
+- response on success: 200
+```json
+{
+  "message": "loaded fulfillment data for a redeemable offer",
+  "contract_addr": "0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9",
+  "offer_id": "0",
+  "url": "https://live.eluv.io/",
+  "codes": [
+    "ABC123",
+    "XYZ789"
+  ]
+}
+```
 
 ### Wallet API
 
 - GET `fulfill/:transaction_id`
   - bearer auth token -> user address
 
-- response on success: url + code
+- response on success: 200
+```json
+{
+  "message": "fulfilled redeemable offer",
+  "fulfillment_data": {
+    "url": "https://live.eluv.io/",
+    "code": "XYZ789"
+  },
+  "transaction": {
+    "contract_address": "0xb914ad493a0a4fe5a899dc21b66a509bcf8f1ed9",
+    "user_address": "0xb516b92fe8f422555f0d04ef139c6a68fe57af08",
+    "token_id": 34,
+    "offer_id": 0
+  }
+}
+```
 - response on error or invalid request (eg, tx tokenId already claimed): 400
 
 
