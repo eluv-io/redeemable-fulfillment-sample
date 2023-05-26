@@ -5,11 +5,11 @@
     # one of "fatal", "error", "warn", "debug", "trace"
     verbosity = "debug"
 
-[elv]
-    # demo
+[elv-main]
+    config_url = "https://main.net955305.contentfabric.io/config"
+
+[elv-demov3]
     config_url = "https://demov3.net955210.contentfabric.io/config"
-    # prod
-    #config_url = "https://main.net955305.contentfabric.io/config"
 
 [db]
     host = "roach-single-node"
