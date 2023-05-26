@@ -1,0 +1,3 @@
+SELECT url, code
+FROM {{.database}}.fulfillment_service
+WHERE contract_addr = $1 AND redeemable_id = $2 AND claimed = false

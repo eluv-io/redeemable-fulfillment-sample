@@ -1,0 +1,3 @@
+SELECT claimed, claimer_user_addr, url, code, created, updated
+FROM {{.database}}.fulfillment_service
+WHERE contract_addr = $1 AND redeemable_id = $2 AND claimer_token_id = $3
