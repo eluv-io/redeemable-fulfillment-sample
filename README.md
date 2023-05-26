@@ -56,7 +56,7 @@ make version
 
 - GET `fulfill/:transaction_id`
   - bearer auth token -> user address
-
+  - append `?network=demov3` to lookup transactions on the `demov3` network instead of `main`; GET `fulfill/:transaction_id?network=demov3`
 - response on success: 200
 ```json
 {
