@@ -6,7 +6,7 @@
 # local dev:
 url = http://localhost:2023
 # deployed sample:
-#url = https://appsvc.svc.eluv.io/fulfillment
+#url = https://appsvc.svc.eluv.io/code-fulfillment
 
 
 # NFT w/ offer: Goat One on demov3
