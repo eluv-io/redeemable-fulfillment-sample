@@ -6,8 +6,8 @@
     verbosity = "debug"
 
 [elv.networks]
-    "main" = "https://main.net955305.contentfabric.io/config"
-    "demov3" = "https://demov3.net955210.contentfabric.io/config"
+    main = "https://main.net955305.contentfabric.io/config"
+    demov3 = "https://demov3.net955210.contentfabric.io/config"
 
 [db]
     host = "roach-single-node"
