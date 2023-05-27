@@ -14,10 +14,10 @@ func NewFulfillmentService(s *Server) *FulfillmentService {
 	}
 }
 
-func (fs *FulfillmentService) SetupFulfillment(data db.SetupData) (err error) {
-	return fs.db.SetupFulfillment(data)
+func (fs *FulfillmentService) SetupFulfillment(setup db.SetupData) (err error) {
+	return fs.db.SetupFulfillment(setup)
 }
 
-func (fs *FulfillmentService) FulfillRedeemableOffer(request db.FulfillmentRequest) (data db.FulfillmentData, err error) {
+func (fs *FulfillmentService) FulfillRedeemableOffer(request db.FulfillmentRequest) (fd db.FulfillmentResponse, err error) {
 	return fs.db.FulfillRedeemableOffer(request)
 }

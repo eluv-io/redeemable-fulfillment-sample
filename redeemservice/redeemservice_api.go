@@ -68,8 +68,8 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 
-		var data LoadRequest
-		if err = ctx.ShouldBind(&data); err != nil {
+		var loadRequest LoadRequest
+		if err = ctx.ShouldBind(&loadRequest); err != nil {
 			log.Warn("error binding request body", "err", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{"message": "error binding request body"})
 		}
@@ -80,24 +80,24 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 		setupData := db.SetupData{
 			ContractAddress: contractAddr,
 			OfferId:         redeemableId,
-			Url:             data.Url,
-			Codes:           data.Codes,
+			Url:             loadRequest.Url,
+			Codes:           loadRequest.Codes,
 		}
 		if err = fs.SetupFulfillment(setupData); err != nil {
-			log.Debug("error with data setup", "err", err)
+			log.Debug("error with loadRequest setup", "err", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "error loading fulfillment data",
+				"message": "error loading fulfillment loadRequest",
 				"err":     err,
 			})
 			return
 		}
 
 		ret := LoadResponse{
-			Message:      "loaded fulfillment data for a redeemable offer",
+			Message:      "loaded fulfillment loadRequest for a redeemable offer",
 			ContractAddr: contractAddr,
 			OfferId:      redeemableId,
-			Url:          data.Url,
-			Codes:        data.Codes,
+			Url:          loadRequest.Url,
+			Codes:        loadRequest.Codes,
 		}
 		ctx.JSON(http.StatusOK, ret)
 	}
@@ -128,8 +128,8 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 			return
 		}
 
-		var data db.FulfillmentData
-		data, err = fs.FulfillRedeemableOffer(request)
+		var fulfillment db.FulfillmentResponse
+		fulfillment, err = fs.FulfillRedeemableOffer(request)
 		if err != nil {
 			log.Debug("error fulfilling offer", "err", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -145,10 +145,10 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 				Url  string `json:"url"`
 				Code string `json:"code"`
 			}{
-				Url:  data.Url,
-				Code: data.Code,
+				Url:  fulfillment.Url,
+				Code: fulfillment.Code,
 			},
-			Transaction: data.ToTransaction(),
+			Transaction: fulfillment.ToTransaction(),
 		}
 		ctx.JSON(http.StatusOK, ret)
 	}

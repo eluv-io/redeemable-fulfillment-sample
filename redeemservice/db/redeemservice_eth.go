@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// ToRedeemable converts based on https://gist.github.com/elv-preethi/44e0a809d3e7daa4e7713d6b23ead136
-func (fp *FulfillmentPersistence) ToRedeemable(fr FulfillmentRequest) (redemption RedemptionTransaction, err error) {
+// ToRedemptionTransaction converts based on https://gist.github.com/elv-preethi/44e0a809d3e7daa4e7713d6b23ead136
+func (fp *FulfillmentPersistence) ToRedemptionTransaction(fr FulfillmentRequest) (redemption RedemptionTransaction, err error) {
 	// get data from tx
 	log.Debug("using eth network", "network", fr.Network)
 	var ec *ethclient.Client
@@ -65,32 +65,31 @@ func (fp *FulfillmentPersistence) ToRedeemable(fr FulfillmentRequest) (redemptio
 		OfferId:         tr.OfferId,
 		IsPending:       isPending,
 	}
-	log.Info("ToRedeemable", "redemption", fmt.Sprintf("%+v", redemption))
+	log.Debug("ToRedemptionTransaction", "redemption", fmt.Sprintf("%+v", redemption))
 
 	return
 }
 
-// resolveTransactionData does an external query to the ELV blockchain to resolve the data from in the request transaction.
+// resolveTransaction does an external query to the ELV blockchain to resolve the data from in the request transaction.
 // It also provides mock data for testing from `make load_codes` + `make fulfill_code`
-func (fp *FulfillmentPersistence) resolveTransactionData(request FulfillmentRequest) (rt RedemptionTransaction, err error) {
+func (fp *FulfillmentPersistence) resolveTransaction(request FulfillmentRequest) (rt RedemptionTransaction, err error) {
 	var isTestData bool
 	isTestData, rt = fp.fillTestData(request)
 	if isTestData {
+		log.Warn("resolveTransaction", "isTestData", isTestData, "redemption", fmt.Sprintf("%+v", rt))
 		return
 	}
 
-	log.Info("resolveTransactionData", "isTestData", isTestData, "redemption", fmt.Sprintf("%+v", rt))
-	rt, err = fp.ToRedeemable(request)
+	rt, err = fp.ToRedemptionTransaction(request)
 	if err != nil {
 		return
 	}
 
-	log.Info("resolveTransactionData", "isTestData", isTestData, "redemption", fmt.Sprintf("%+v", rt))
 	return
 }
 
 // fillTestData is for integration testing. It provides mock data for testing from `make load_codes` + `make fulfill_code`
-func (fp *FulfillmentPersistence) fillTestData(request FulfillmentRequest) (isTestData bool, data RedemptionTransaction) {
+func (fp *FulfillmentPersistence) fillTestData(request FulfillmentRequest) (isTestData bool, redeemable RedemptionTransaction) {
 	isTestData = false
 	if strings.Contains(request.Transaction, "tx-test") {
 		isTestData = true
@@ -100,7 +99,7 @@ func (fp *FulfillmentPersistence) fillTestData(request FulfillmentRequest) (isTe
 		log.Warn("converting tx-test to tx", "tx", request.Transaction)
 
 		var err error
-		data, err = fp.ToRedeemable(request)
+		redeemable, err = fp.ToRedemptionTransaction(request)
 		if err != nil {
 			log.Error("cannot convert tx-test to tx", "err", err)
 			return
@@ -108,21 +107,21 @@ func (fp *FulfillmentPersistence) fillTestData(request FulfillmentRequest) (isTe
 
 		switch testTx {
 		case "tx-test-0000":
-			data.RedeemerAddress = request.UserAddress
-			data.TokenId = 1
+			redeemable.RedeemerAddress = request.UserAddress
+			redeemable.TokenId = 1
 		case "tx-test-0001":
-			data.RedeemerAddress = request.UserAddress
-			data.TokenId = 2
+			redeemable.RedeemerAddress = request.UserAddress
+			redeemable.TokenId = 2
 		case "tx-test-0002":
-			data.RedeemerAddress = request.UserAddress
-			data.TokenId = 3
+			redeemable.RedeemerAddress = request.UserAddress
+			redeemable.TokenId = 3
 		case "tx-test-invaliduser":
 			// already invalid
 		}
 	}
 
 	if isTestData {
-		log.Warn("forged redemption data", "redemption", data)
+		log.Warn("forged redemption redeemable", "redemption", redeemable)
 	}
 
 	return

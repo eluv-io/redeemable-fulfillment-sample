@@ -47,7 +47,7 @@ type FulfillmentRequest struct {
 	Network     string `json:"network"`
 }
 
-type FulfillmentData struct {
+type FulfillmentResponse struct {
 	ContractAddr string    `json:"contract_address"`
 	OfferId      string    `json:"offer_id"`
 	TokenId      string    `json:"token_id"`
@@ -65,24 +65,24 @@ func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrls map[string]stri
 	return &FulfillmentPersistence{pool: cm, ethUrlByNetwork: ethUrls}
 }
 
-func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
-	log.Debug("SetupFulfillment", "data", data)
-	if data.ContractAddress == "" || data.OfferId == "" || data.Url == "" || data.Codes == nil || len(data.Codes) == 0 {
-		log.Debug("invalid data", "data", data)
-		err = errors.NoTrace("invalid load data", errors.K.Invalid, "data", data)
+func (fp *FulfillmentPersistence) SetupFulfillment(setup SetupData) (err error) {
+	log.Debug("SetupFulfillment", "setup", setup)
+	if setup.ContractAddress == "" || setup.OfferId == "" || setup.Url == "" || setup.Codes == nil || len(setup.Codes) == 0 {
+		log.Debug("invalid setup", "setup", setup)
+		err = errors.NoTrace("invalid load setup", errors.K.Invalid, "setup", setup)
 		return
 	}
 
-	for _, code := range data.Codes {
+	for _, code := range setup.Codes {
 		var stmt string
 		if stmt, err = mergeTemplate("sql/add-mapping.tmpl", fp.context()); err != nil {
 			return
 		}
 
 		var args []interface{}
-		args = append(args, data.ContractAddress)
-		args = append(args, data.OfferId)
-		args = append(args, data.Url)
+		args = append(args, setup.ContractAddress)
+		args = append(args, setup.OfferId)
+		args = append(args, setup.Url)
 		args = append(args, code)
 
 		if _, err = fp.conn().Exec(stmt, args...); err != nil {
@@ -93,10 +93,10 @@ func (fp *FulfillmentPersistence) SetupFulfillment(data SetupData) (err error) {
 	return
 }
 
-func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentData, err error) {
+func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequest) (resp FulfillmentResponse, err error) {
 
 	var tx RedemptionTransaction
-	if tx, err = fp.resolveTransactionData(request); err != nil {
+	if tx, err = fp.resolveTransaction(request); err != nil {
 		log.Warn("error resolving tx", "error", err)
 		return
 	}
@@ -159,7 +159,7 @@ func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	return
 }
 
-func (fp *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, tokenId string) (resp FulfillmentData, err error) {
+func (fp *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, tokenId string) (resp FulfillmentResponse, err error) {
 	var stmt string
 	templateArgs := fp.context()
 	if stmt, err = mergeTemplate("sql/get-mapping.tmpl", templateArgs); err != nil {
@@ -216,7 +216,7 @@ func (fp *FulfillmentPersistence) GetUnclaimed(contractAddr, redeemableId string
 	return
 }
 
-func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId string) (row FulfillmentData, err error) {
+func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId string) (row FulfillmentResponse, err error) {
 	var claimed sql.NullBool
 	var addr, url, code sql.NullString
 	var created, updated sql.NullTime
@@ -224,7 +224,7 @@ func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId str
 		return
 	}
 	if claimed.Valid {
-		row = FulfillmentData{
+		row = FulfillmentResponse{
 			Claimed:  claimed.Bool,
 			UserAddr: addr.String,
 			Created:  created.Time,
@@ -241,7 +241,7 @@ func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId str
 	return
 }
 
-func (fd *FulfillmentData) ToTransaction() RedemptionTransaction {
+func (fd *FulfillmentResponse) ToTransaction() RedemptionTransaction {
 	tid, _ := strconv.ParseInt(fd.TokenId, 10, 64)
 	var oid uint8
 	_, _ = fmt.Scan(fd.OfferId, &oid)
