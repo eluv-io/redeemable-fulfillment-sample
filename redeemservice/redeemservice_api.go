@@ -116,12 +116,8 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 		var err error
 
 		var request db.FulfillmentRequest
-		if err = ctx.ShouldBind(&request); err != nil {
-			log.Warn("error binding request body", "err", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"message": "error binding request body"})
-		}
-
 		request.Transaction = ctx.Param("transaction_id")
+		request.Network = utils.IfElse(ctx.Query("network") == "", "main", ctx.Query("network"))
 		request.UserAddress, err = utils.ExtractUserAddress(ctx)
 		if err != nil {
 			log.Warn("error extracting user address", "err", err)
@@ -131,8 +127,6 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 			})
 			return
 		}
-
-		request.Network = utils.IfElse(ctx.Query("network") == "", "main", ctx.Query("network"))
 
 		var data db.FulfillmentData
 		data, err = fs.FulfillRedeemableOffer(request)
