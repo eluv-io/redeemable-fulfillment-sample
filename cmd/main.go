@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"fulfillmentd/constants"
 	"fulfillmentd/fulfillmentd"
 	"fulfillmentd/server"
 	"fulfillmentd/server/config"
@@ -25,13 +26,6 @@ type ConfigState struct {
 	Verbosity  string
 }
 
-const (
-	DaemonName = "fulfillmentd"
-	ElvSection = "elv"
-	Main       = "main"
-	Demov3     = "demov3"
-)
-
 var (
 	cfgState = ConfigState{}
 	log      = elog.Get("/fs")
@@ -39,7 +33,7 @@ var (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Printf("Usage: %s --config <config.toml>\n", DaemonName)
+		fmt.Printf("Usage: %s --config <config.toml>\n", constants.DaemonName)
 		return
 	}
 
@@ -70,13 +64,13 @@ func startServer(configFile string) (s *server.Server, err error) {
 
 func loadConfig(configFile string) (cfg *config.AuthorityConfig, err error) {
 	log.Debug("config", "file", configFile)
-	viper.SetDefault(DaemonName+".service_port", 2023)
-	viper.SetDefault(DaemonName+".log_file", DaemonName)
-	viper.SetDefault(DaemonName+".log_handler", "console")
-	viper.SetDefault(DaemonName+".verbosity", 3)
-	viper.SetDefault(ElvSection+".networks", map[string]string{
-		Main:   "https://main.net955305.contentfabric.io/config",
-		Demov3: "https://demov3.net955210.contentfabric.io/config",
+	viper.SetDefault(constants.DaemonName+".service_port", 2023)
+	viper.SetDefault(constants.DaemonName+".log_file", constants.DaemonName)
+	viper.SetDefault(constants.DaemonName+".log_handler", "console")
+	viper.SetDefault(constants.DaemonName+".verbosity", 3)
+	viper.SetDefault(constants.ElvSection+".networks", map[string]string{
+		constants.Main:   "https://main.net955305.contentfabric.io/config",
+		constants.Demov3: "https://demov3.net955210.contentfabric.io/config",
 	})
 
 	viper.SetConfigFile(configFile)
@@ -111,7 +105,7 @@ func loadConfig(configFile string) (cfg *config.AuthorityConfig, err error) {
 }
 
 func getBaseConfig(cfg *config.AuthorityConfig) (err error) {
-	if err = loadConfigState(&cfgState, DaemonName); err != nil {
+	if err = loadConfigState(&cfgState, constants.DaemonName); err != nil {
 		log.Error("error parsing", "config file", err)
 		return
 	}
@@ -135,7 +129,7 @@ func getBaseConfig(cfg *config.AuthorityConfig) (err error) {
 	}
 	log.Info("eth endpoints", "url-map", cfg.EthUrlsByNetwork)
 
-	cfg.Port = viper.GetInt(DaemonName + ".service_port")
+	cfg.Port = viper.GetInt(constants.DaemonName + ".service_port")
 
 	return
 }

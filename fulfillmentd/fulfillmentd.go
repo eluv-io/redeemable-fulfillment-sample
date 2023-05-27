@@ -2,6 +2,7 @@ package fulfillmentd
 
 import (
 	"fmt"
+	"fulfillmentd/constants"
 	api "fulfillmentd/redeemservice"
 	"fulfillmentd/server"
 	"fulfillmentd/version"
@@ -42,6 +43,7 @@ func addBaseRoutes(engine *gin.Engine) {
 
 func Version(ctx *gin.Context) {
 	resp := gin.H{
+		"name":     constants.DaemonName,
 		"version":  "v" + version.BestVersion(),
 		"revision": version.Revision(),
 		"branch":   version.Branch(),
