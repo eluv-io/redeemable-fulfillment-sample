@@ -158,11 +158,32 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 		fulfillment, err = fs.FulfillRedeemableOffer(request)
 		if err != nil {
 			log.Debug("error fulfilling offer", "err", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "error fulfilling offer",
-				"err":     err,
-			})
-			return
+
+			redeemed, getErr := fs.GetRedeemableOffer(fulfillment.ContractAddr, fulfillment.OfferId, fulfillment.TokenId)
+			log.Trace("GetRedeemableOffer", "redeemed", redeemed, "getErr", getErr)
+
+			if redeemed.Claimed {
+				log.Debug("already redeemed offer")
+				ret := FulfillmentResponse{
+					Message: "already fulfilled redeemable offer",
+					FulfillmentData: struct {
+						Url  string `json:"url"`
+						Code string `json:"code"`
+					}{
+						Url:  redeemed.Url,
+						Code: redeemed.Code,
+					},
+					Transaction: fulfillment.ToTransaction(),
+				}
+				ctx.JSON(http.StatusOK, ret)
+				return
+			} else {
+				ctx.JSON(http.StatusBadRequest, gin.H{
+					"message": "error fulfilling offer",
+					"err":     err,
+				})
+				return
+			}
 		}
 
 		ret := FulfillmentResponse{

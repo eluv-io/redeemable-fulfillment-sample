@@ -98,6 +98,7 @@ func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	var tx RedemptionTransaction
 	if tx, err = fp.resolveTransaction(request); err != nil {
 		log.Warn("error resolving tx", "error", err)
+		err = errors.NoTrace("error resolving tx", errors.K.Invalid, "error", err, "request", request)
 		return
 	}
 	offerId := fmt.Sprintf("%d", tx.OfferId)
@@ -170,6 +171,7 @@ func (fp *FulfillmentPersistence) GetRedeemedOffer(contractAddr, redeemableId, t
 	args = append(args, contractAddr)
 	args = append(args, redeemableId)
 	args = append(args, tokenId)
+	//log.Trace("GetRedeemedOffer", "stmt", stmt, "args", args)
 
 	var rows *pgx.Rows
 	if rows, err = fp.conn().Query(stmt, args...); err != nil {

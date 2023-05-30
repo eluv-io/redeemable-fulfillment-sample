@@ -21,3 +21,7 @@ func (fs *FulfillmentService) SetupFulfillment(setup db.SetupData) (err error) {
 func (fs *FulfillmentService) FulfillRedeemableOffer(request db.FulfillmentRequest) (fd db.FulfillmentResponse, err error) {
 	return fs.db.FulfillRedeemableOffer(request)
 }
+
+func (fs *FulfillmentService) GetRedeemableOffer(contractAddr, redeemableId, tokenId string) (fd db.FulfillmentResponse, err error) {
+	return fs.db.GetRedeemedOffer(contractAddr, redeemableId, tokenId)
+}

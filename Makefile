@@ -15,6 +15,9 @@ offerId=0
 # Sample redeem tx -- https://eluvio.tryethernal.com/transaction/0x7f48187a55836aa0a7da0ff591e8d34e5fce1075725e3bba6ec041b6f9d5fc8e
 tx=0x7f48187a55836aa0a7da0ff591e8d34e5fce1075725e3bba6ec041b6f9d5fc8e
 
+# NFT w/ offer: Acme Ticket on demov3
+contract2=0x2d9729b9f7049bb3cd6c4ed572f7e6f47922ca68
+
 test_tx=tx-test-0000
 msg='{ "url": "https://eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
 h= -H "Content-Type: application/json"
@@ -48,8 +51,8 @@ build_and_run_with_logs:
 #
 
 load_codes:
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/0x0/$(offerId) | jq .
 	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/$(contract)/$(offerId) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/$(contract2)/$(offerId) | jq .
 
 test_fulfill_code:
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/$(test_tx)" | jq .
