@@ -28,6 +28,7 @@
 package api
 
 import (
+	"fulfillmentd/constants"
 	"fulfillmentd/redeemservice/db"
 	"fulfillmentd/server"
 	"fulfillmentd/utils"
@@ -60,13 +61,26 @@ type LoadResponse struct {
 func AddRoutes(s *server.Server) {
 	log.Info("Adding FS routes")
 	public := s.Router.Group("/")
-	public.POST("load/:contract_addr/:redeemable_id", LoadFulfillmentData(s.FulfillmentService))
-	public.GET("fulfill/:transaction_id", FulfillRedeemableOffer(s.FulfillmentService))
+	public.POST(":network/load/:contract_addr/:redeemable_id", LoadFulfillmentData(s.FulfillmentService))
+	public.GET(":network/fulfill/:transaction_id", FulfillRedeemableOffer(s.FulfillmentService))
 }
 
+// LoadFulfillmentData godoc
+// @ID offer-redemption-load
+// @Summary Load fulfillment data for a redeemable offer
+// @Description Load fulfillment data for a redeemable offer
+// @Param network path string true "which ELV network the contract is on: 'main' or 'demov3'.  This is ignored for now."
+// @Param contract_addr path string true "the contract address of the redeemable offer"
+// @Param redeemable_id path string true "the redeemable offer id"
+// @Param load_request body LoadRequest true "the fulfillment data url and codes to load"
+// @Produce  json
+// @Router /:network/load/:contact_addr/:redeemable_id [POST]
 func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
+
+		network := ctx.Param("network")
+		log.Info("LoadFulfillmentData ignores network for now", "network", network)
 
 		var loadRequest LoadRequest
 		if err = ctx.ShouldBind(&loadRequest); err != nil {
@@ -107,17 +121,29 @@ func LoadFulfillmentData(fs *server.FulfillmentService) gin.HandlerFunc {
 // @ID offer-redemption
 // @Summary FulfillRedeemableOffer
 // @Description FulfillRedeemableOffer
+// @Param network path string true "which ELV network to look up transaction: 'main' or 'demov3'"
 // @Param transaction_id path string true "blockchain transaction id that shows the redeemable offer was redeemed"
-// @Param network query string false "which ELV network to look up transaction: 'main' or 'demov3'; defaults to main"
 // @Produce  json
-// @Router /fulfill/:transaction_id [GET]
+// @Router /:network/fulfill/:transaction_id [GET]
 func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 
 		var request db.FulfillmentRequest
 		request.Transaction = ctx.Param("transaction_id")
-		request.Network = utils.IfElse(ctx.Query("network") == "", "main", ctx.Query("network"))
+		request.Network = ctx.Param("network")
+		switch request.Network {
+		case constants.Main, constants.Demov3:
+			// ok
+		default:
+			log.Warn("invalid network", "network", request.Network)
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "invalid network",
+				"network": request.Network,
+				"err":     "invalid elv network name; expected main or demov3",
+			})
+			return
+		}
 		request.UserAddress, err = utils.ExtractUserAddress(ctx)
 		if err != nil {
 			log.Warn("error extracting user address", "err", err)

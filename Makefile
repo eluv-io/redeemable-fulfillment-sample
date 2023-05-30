@@ -48,11 +48,11 @@ build_and_run_with_logs:
 #
 
 load_codes:
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/0x0/$(offerId) | jq .
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/load/$(contract)/$(offerId) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/0x0/$(offerId) | jq .
+	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/$(contract)/$(offerId) | jq .
 
 test_fulfill_code:
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(test_tx)?network=demov3" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/$(test_tx)" | jq .
 
 #
 # this targets requires an env var that contains the transaction, and the matching user token:
@@ -60,17 +60,17 @@ test_fulfill_code:
 #  export tx=0x7f48187a55836aa0a7da0ff591e8d34e5fce1075725e3bba6ec041b6f9d5fc8e
 #
 fulfill_code:
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/$(tx)?network=demov3" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/$(tx)" | jq .
 
 test_invalid_user:
 	@echo "test invalid user:"
-	curl -s -H 'Authorization: Bearer $(tok)' $(url)/fulfill/tx-test-invaliduser?network=demov3 | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' $(url)/demov3/fulfill/tx-test-invaliduser | jq .
 
 test_out_of_codes:
 	@echo "use after load_codes"
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0000?network=demov3" | jq .
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0001?network=demov3" | jq .
-	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/fulfill/tx-test-0002?network=demov3" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/tx-test-0000" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/tx-test-0001" | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/tx-test-0002" | jq .
 
 #
 # helpers
@@ -82,4 +82,6 @@ config:
 
 version:
 	curl -s $(url)/version | jq .
+	curl -s $(url)/main/version | jq .
+	curl -s $(url)/demov3/version | jq .
 

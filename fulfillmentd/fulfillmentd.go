@@ -37,6 +37,7 @@ func addBaseRoutes(engine *gin.Engine) {
 	defaultRoutes := []*server.Route{
 		GET("", func(ctx *gin.Context) { Version(ctx) }),
 		GET("/version", func(ctx *gin.Context) { Version(ctx) }),
+		GET("/:network/version", func(ctx *gin.Context) { Version(ctx) }),
 	}
 	routeGroup := server.NewGroup(defaultRoutes...)
 	routeGroup.HandleAllRoutes(engine)
