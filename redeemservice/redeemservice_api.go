@@ -28,7 +28,6 @@
 package api
 
 import (
-	"fulfillmentd/constants"
 	"fulfillmentd/redeemservice/db"
 	"fulfillmentd/server"
 	"fulfillmentd/utils"
@@ -131,19 +130,20 @@ func FulfillRedeemableOffer(fs *server.FulfillmentService) gin.HandlerFunc {
 
 		var request db.FulfillmentRequest
 		request.Transaction = ctx.Param("transaction_id")
+
 		request.Network = ctx.Param("network")
-		switch request.Network {
-		case constants.Main, constants.Demov3:
-			// ok
-		default:
+		avail := fs.AvailableNetworks()
+		if !utils.ArrayContains(avail, request.Network) {
 			log.Warn("invalid network", "network", request.Network)
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "invalid network",
-				"network": request.Network,
-				"err":     "invalid elv network name; expected main or demov3",
+				"message":   "invalid network",
+				"requested": request.Network,
+				"available": avail,
+				"err":       "invalid elv.network name",
 			})
 			return
 		}
+
 		request.UserAddress, err = utils.ExtractUserAddress(ctx)
 		if err != nil {
 			log.Warn("error extracting user address", "err", err)

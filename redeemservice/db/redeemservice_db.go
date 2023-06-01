@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"fulfillmentd/server/db"
+	"fulfillmentd/utils"
 	"github.com/eluv-io/errors-go"
 	elog "github.com/eluv-io/log-go"
 	"github.com/jackc/pgx"
@@ -65,6 +66,10 @@ func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrls map[string]stri
 	return &FulfillmentPersistence{pool: cm, ethUrlByNetwork: ethUrls}
 }
 
+func (fp *FulfillmentPersistence) AvailableNetworks() (nets []string) {
+	nets = utils.Keys(fp.ethUrlByNetwork)
+	return
+}
 func (fp *FulfillmentPersistence) SetupFulfillment(setup SetupData) (err error) {
 	log.Debug("SetupFulfillment", "setup", setup)
 	if setup.ContractAddress == "" || setup.OfferId == "" || setup.Url == "" || setup.Codes == nil || len(setup.Codes) == 0 {

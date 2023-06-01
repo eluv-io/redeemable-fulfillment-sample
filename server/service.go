@@ -14,6 +14,10 @@ func NewFulfillmentService(s *Server) *FulfillmentService {
 	}
 }
 
+func (fs *FulfillmentService) AvailableNetworks() (nets []string) {
+	return fs.db.AvailableNetworks()
+}
+
 func (fs *FulfillmentService) SetupFulfillment(setup db.SetupData) (err error) {
 	return fs.db.SetupFulfillment(setup)
 }

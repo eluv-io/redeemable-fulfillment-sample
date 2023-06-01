@@ -69,6 +69,10 @@ test_invalid_user:
 	@echo "test invalid user:"
 	curl -s -H 'Authorization: Bearer $(tok)' $(url)/demov3/fulfill/tx-test-invaliduser | jq .
 
+test_invalid_network:
+	@echo "test invalid user:"
+	curl -s -H 'Authorization: Bearer $(tok)' $(url)/invalid/fulfill/$(tx) | jq .
+
 test_out_of_codes:
 	@echo "use after load_codes"
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/tx-test-0000" | jq .

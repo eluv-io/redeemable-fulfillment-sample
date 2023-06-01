@@ -21,6 +21,30 @@ func IfElse[T any](cond bool, trueVal, falseVal T) T {
 	return falseVal
 }
 
+func Keys[T comparable](m map[string]T) []string {
+	keys := make([]string, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	return keys
+}
+
+func ArrayContains[T comparable](elems []T, v T) bool {
+	for _, s := range elems {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func MapContains[T comparable](m map[string]T, key string) bool {
+	_, ok := m[key]
+	return ok
+}
+
 func ExtractUserAddress(ctx *gin.Context) (addr string, err error) {
 	e := errors.TemplateNoTrace("ExtractUserAddress", errors.K.Invalid)
 
