@@ -18,6 +18,10 @@ tx=0x7f48187a55836aa0a7da0ff591e8d34e5fce1075725e3bba6ec041b6f9d5fc8e
 # NFT w/ offer: Acme Ticket on demov3
 contract2=0x2d9729b9f7049bb3cd6c4ed572f7e6f47922ca68
 
+# eluvio prod sheep
+#contract3=0xe70d12af413a3a4caf2e8e182560c7324268b443
+#contract3=0xd4c8153372b0292b364dac40d0ade37da4c4869a
+
 test_tx=tx-test-0000
 msg='{ "url": "https://eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
 h= -H "Content-Type: application/json"
@@ -52,7 +56,6 @@ build_and_run_with_logs:
 
 load_codes:
 	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/$(contract)/$(offerId) | jq .
-	curl -s -X POST $h -d $(msg) -H 'Authorization: Bearer $(tok)' $(url)/demov3/load/$(contract2)/$(offerId) | jq .
 
 test_fulfill_code:
 	curl -s -H 'Authorization: Bearer $(tok)' "$(url)/demov3/fulfill/$(test_tx)" | jq .
@@ -67,7 +70,7 @@ fulfill_code:
 
 test_invalid_user:
 	@echo "test invalid user:"
-	curl -s -H 'Authorization: Bearer $(tok)' $(url)/demov3/fulfill/tx-test-invaliduser | jq .
+	curl -s -H 'Authorization: Bearer $(tok)' $(url)/demov3/fulfill/tx-invaliduser | jq .
 
 test_invalid_network:
 	@echo "test invalid user:"

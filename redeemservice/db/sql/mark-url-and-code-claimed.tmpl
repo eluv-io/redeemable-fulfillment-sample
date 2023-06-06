@@ -1,0 +1,4 @@
+UPDATE {{.database}}.fulfillment_service
+SET claimed = true, updated = now()
+WHERE url = $1 AND code = $2 AND claimed = false
+RETURNING contract_addr;

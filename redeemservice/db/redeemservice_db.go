@@ -144,11 +144,18 @@ func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 	defer rows.Close()
 
 	if rows.Next() {
+		// fulfillment successful
 		resp, err = scanFulfillmentData(rows, tx.ContractAddress, offerId, tokenId)
 		if resp.Claimed {
 			resp.UserAddr = tx.RedeemerAddress
+
+			err = fp.markUrlAndCodeClaimed(resp.Url, resp.Code)
+			if err != nil {
+				return
+			}
 		}
 	} else {
+		// fulfillment failed; see why
 		var unclaimed []string
 		unclaimed, err = fp.GetUnclaimed(tx.ContractAddress, offerId)
 		if err != nil {
@@ -160,6 +167,36 @@ func (fp *FulfillmentPersistence) FulfillRedeemableOffer(request FulfillmentRequ
 		} else {
 			err = errors.NoTrace("unable to redeem", errors.K.Invalid, "request", request, "tx", tx)
 		}
+	}
+
+	return
+}
+
+// markUrlAndCodeClaimed marks the url and code as claimed in all other contracts, in case there are dups
+func (fp *FulfillmentPersistence) markUrlAndCodeClaimed(url, code string) (err error) {
+	var stmt string
+	templateArgs := fp.context()
+	if stmt, err = mergeTemplate("sql/mark-url-and-code-claimed.tmpl", templateArgs); err != nil {
+		return
+	}
+
+	var args []interface{}
+	args = append(args, url)
+	args = append(args, code)
+
+	var rows *pgx.Rows
+	if rows, err = fp.conn().Query(stmt, args...); err != nil {
+		return
+	}
+	defer rows.Close()
+
+	var otherContracts []string
+	otherContracts, err = scanDups(rows)
+	if err != nil {
+		return
+	}
+	if len(otherContracts) > 1 {
+		log.Debug("marked this Url and Code claimed", "otherContracts", otherContracts)
 	}
 
 	return
@@ -242,6 +279,22 @@ func scanFulfillmentData(rows *pgx.Rows, contractAddr, redeemableId, tokenId str
 			ContractAddr: contractAddr,
 			OfferId:      redeemableId,
 			TokenId:      tokenId,
+		}
+	}
+
+	return
+}
+
+func scanDups(rows *pgx.Rows) (otherContracts []string, err error) {
+	otherContracts = make([]string, 0)
+
+	for rows.Next() {
+		var addr sql.NullString
+		if err = rows.Scan(&addr); err != nil {
+			return
+		}
+		if addr.Valid {
+			otherContracts = append(otherContracts, addr.String)
 		}
 	}
 
