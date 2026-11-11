@@ -1,0 +1,42 @@
+[Unit]
+Description=fulfillmentd
+Documentation=man:podman-generate-systemd(1)
+Wants=network.target
+After=network-online.target
+RequiresMountsFor=%t/containers
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Restart=on-failure
+TimeoutStopSec=70
+ExecStartPre=/bin/rm \
+   -f %t/%n.pid %t/%n.ctr-id
+ExecStart=/usr/bin/podman run \
+   --conmon-pidfile %t/%n.pid \
+   --cidfile %t/%n.ctr-id \
+   --cgroups=no-conmon \
+   --replace \
+   -d \
+   --rm \
+   --name fulfillmentd \
+   --net=host \
+   -p 2023:2023 \
+   -v /home/appservices/main/keys:/certs \
+   -v /home/appservices/main/fulfillmentd:/conf \
+   -v /home/appservices/run/logs:/logs \
+   us-docker.pkg.dev/eluvio-containers/containers/fulfillmentd:latest \
+      --config /conf/config.toml
+ExecStop=/usr/bin/podman kill \
+   --signal TERM \
+   --ignore \
+   --cidfile %t/%n.ctr-id \
+   -t 10
+ExecStopPost=/usr/bin/podman rm \
+   --ignore \
+   -f \
+   --cidfile %t/%n.ctr-id
+PIDFile=%t/%n.pid
+Type=forking
+
+[Install]
+WantedBy=multi-user.target default.target
