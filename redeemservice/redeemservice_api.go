@@ -62,6 +62,7 @@ func AddRoutes(s *server.Server) {
 	public := s.Router.Group("/")
 	public.POST(":network/load/:contract_addr/:redeemable_id", LoadFulfillmentData(s.FulfillmentService))
 	public.GET(":network/fulfill/:transaction_id", FulfillRedeemableOffer(s.FulfillmentService))
+	addStatusRoutes(s)
 }
 
 // LoadFulfillmentData godoc

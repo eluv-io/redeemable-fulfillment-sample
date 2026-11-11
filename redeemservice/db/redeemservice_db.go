@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"fulfillmentd/server/db"
 	"fulfillmentd/utils"
-	"github.com/eluv-io/errors-go"
-	elog "github.com/eluv-io/log-go"
-	"github.com/jackc/pgx"
 	"io/fs"
 	"regexp"
 	"strconv"
 	"text/template"
 	"time"
+
+	"github.com/eluv-io/errors-go"
+	elog "github.com/eluv-io/log-go"
+	"github.com/jackc/pgx"
 )
 
 //go:embed sql/*.tmpl
@@ -22,24 +23,10 @@ var statementsFS embed.FS
 
 var log = elog.Get("/fs/db")
 
+// FulfillmentDB
 type FulfillmentPersistence struct {
 	pool            *db.ConnectionManager
 	ethUrlByNetwork map[string]string
-}
-
-type SetupData struct {
-	ContractAddress string   `json:"contract_address"`
-	OfferId         string   `json:"offer_id"`
-	Url             string   `json:"url"`
-	Codes           []string `json:"codes"`
-}
-
-type RedemptionTransaction struct {
-	ContractAddress string `json:"contract_address"`
-	RedeemerAddress string `json:"user_address"`
-	TokenId         int64  `json:"token_id"`
-	OfferId         uint8  `json:"offer_id"`
-	IsPending       bool   `json:"-"`
 }
 
 type FulfillmentRequest struct {
@@ -59,6 +46,23 @@ type FulfillmentResponse struct {
 
 	Url  string `json:"url"`
 	Code string `json:"code"`
+}
+
+// Code Setup API
+type SetupData struct {
+	ContractAddress string   `json:"contract_address"`
+	OfferId         string   `json:"offer_id"`
+	Url             string   `json:"url"`
+	Codes           []string `json:"codes"`
+}
+
+// Internal match of tx against blockchain
+type RedemptionTransaction struct {
+	ContractAddress string `json:"contract_address"`
+	RedeemerAddress string `json:"user_address"`
+	TokenId         int64  `json:"token_id"`
+	OfferId         uint8  `json:"offer_id"`
+	IsPending       bool   `json:"-"`
 }
 
 func NewFulfillmentPersistence(cm *db.ConnectionManager, ethUrls map[string]string) *FulfillmentPersistence {

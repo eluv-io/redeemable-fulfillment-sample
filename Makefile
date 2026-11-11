@@ -6,7 +6,7 @@
 # local dev:
 url = http://localhost:2023
 # deployed sample:
-url = https://appsvc.svc.eluv.io/main/code-fulfillment
+url = https://appsvc.svc.eluv.io/code-fulfillment
 
 
 # NFT w/ offer: Goat One on demov3
@@ -25,6 +25,9 @@ contract2=0x2d9729b9f7049bb3cd6c4ed572f7e6f47922ca68
 test_tx=tx-test-0000
 msg='{ "url": "https://eluv.io/", "codes":  [ "ABC123", "XYZ789" ] }'
 h= -H "Content-Type: application/json"
+
+default:
+	(make build && (make run & make logs))
 
 
 build:
