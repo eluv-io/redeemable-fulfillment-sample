@@ -2,30 +2,13 @@ package api
 
 import (
 	"fulfillmentd/server"
-	"fulfillmentd/version"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-// addStatusRoutes adds /version and /health
+// addStatusRoutes adds /health (/version is in fulfillmentd/fulfillmentd.go addBaseRoutes)
 func addStatusRoutes(s *server.Server) {
-	s.Router.GET("/version", Version)
 	s.Router.GET("/health", Health(s))
-}
-
-// Version godoc
-// @ID version
-// @Summary Version info of the running build
-// @Produce  json
-// @Router /version [GET]
-func Version(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
-		"name":     "fulfillmentd",
-		"version":  version.BestVersion(),
-		"revision": version.Revision(),
-		"branch":   version.Branch(),
-		"date":     version.Date(),
-	})
 }
 
 // Health godoc
